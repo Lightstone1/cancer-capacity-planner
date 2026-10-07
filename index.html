@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancer Pathway Capacity Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control-room tool. Scenario strip on top, tumour-site tabs, site inputs left rail + results right; trust-wide view is results only. */
+:root{
+  --bg:#f2f5f4; --surface:#fcfcfb; --ink:#13201f; --ink-2:#4a5755; --muted:#76817f;
+  --line:#dce3e1; --line-strong:#c3ccca;
+  --accent:#0e5f63; --accent-ink:#ffffff; --accent-soft:#e0eeed;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#0ca30c; --good-ink:#006300; --warn:#fab219; --warn-ink:#875800; --crit:#d03b3b; --crit-ink:#ad2828;
+  --font-ui:"Atkinson Hyperlegible", system-ui, "Segoe UI", sans-serif;
+  --font-data:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1413; --surface:#171f1e; --ink:#eef3f2; --ink-2:#b8c3c1; --muted:#87918f;
+  --line:#26302e; --line-strong:#3a4543;
+  --accent:#5db6b2; --accent-ink:#0a1312; --accent-soft:#1b3231;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good-ink:#3fcf3f; --warn-ink:#fab219; --crit-ink:#f17b7b; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1413; --surface:#171f1e; --ink:#eef3f2; --ink-2:#b8c3c1; --muted:#87918f;
+  --line:#26302e; --line-strong:#3a4543;
+  --accent:#5db6b2; --accent-ink:#0a1312; --accent-soft:#1b3231;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good-ink:#3fcf3f; --warn-ink:#fab219; --crit-ink:#f17b7b; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:18px}
+@media (min-width:900px){.wrap{padding-inline:28px}}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:1.65rem;letter-spacing:-.01em}
+h2{font-size:1.05rem}
+h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2)}
+p{margin:0}
+.num,.mono{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.brand{display:grid;gap:4px;min-width:0}
+.eyebrow{font-family:var(--font-data);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--ink-2);max-width:68ch}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:.88rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:4px 9px;font-size:.8rem}
+
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
+.notice b{white-space:nowrap}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.scenario{display:grid;gap:12px}
+.scenario-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px 16px}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:.8rem;color:var(--ink-2)}
+.field input[type=number],.field input[type=date],.field select,.field input[type=text]{width:100%;padding:6px 8px;border:1px solid var(--line-strong);border-radius:5px;background:var(--bg);font-family:var(--font-data);font-size:.9rem}
+.field input[type=text]{font-family:var(--font-ui)}
+.range{display:flex;align-items:center;gap:8px}
+.range input{flex:1;min-width:0;accent-color:var(--accent)}
+.range output{font-family:var(--font-data);font-size:.85rem;min-width:4.2ch;text-align:right}
+.check{display:flex;gap:8px;align-items:center;font-size:.9rem;padding-top:18px}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+
+.tabs-wrap{overflow-x:auto;margin-inline:-4px;padding:4px}
+.tabs{display:flex;gap:6px;width:max-content}
+.tab{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.88rem;display:flex;gap:7px;align-items:center;white-space:nowrap}
+.tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.crit{background:var(--crit)}
+
+.main{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){.main.site{grid-template-columns:310px minmax(0,1fr)}}
+.rail{display:grid;gap:16px;align-content:start}
+.rail fieldset{border:0;padding:0;margin:0;display:grid;gap:10px}
+.rail legend{padding:0;margin-bottom:8px}
+.rail .fields{grid-template-columns:1fr 1fr}
+.rail .field.wide{grid-column:1/-1}
+.rail-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.rail-head input{font-weight:700;font-size:1.05rem;border:1px solid transparent;background:transparent;padding:4px 6px;border-radius:5px;min-width:0;flex:1}
+.rail-head input:hover,.rail-head input:focus{border-color:var(--line-strong)}
+.hint{font-size:.78rem;color:var(--muted)}
+
+.results{display:grid;gap:18px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:6px;align-content:start}
+.kpi .k-label{font-size:.78rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+.kpi .k-val{font-size:1.75rem;font-weight:700;line-height:1.1}
+.kpi .k-sub{font-size:.82rem;color:var(--ink-2)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;padding:2px 8px 2px 6px;border-radius:999px;border:1px solid var(--line-strong);width:max-content}
+.chip.good{color:var(--good-ink)} .chip.warn{color:var(--warn-ink)} .chip.crit{color:var(--crit-ink)}
+.chip .ic{width:14px;height:14px;border-radius:50%;display:grid;place-items:center;font-size:10px;color:#fff;line-height:1}
+.chip.good .ic{background:var(--good)} .chip.warn .ic{background:var(--warn);color:#2a1d00} .chip.crit .ic{background:var(--crit)}
+
+.charts{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.charts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.charts .full{grid-column:1/-1}}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 8px;display:grid;gap:8px;min-width:0}
+.chart-head{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;align-items:baseline}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.legend i.dash{background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px)!important;height:2px}
+.chart{position:relative;min-height:220px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .base{stroke:var(--line-strong);stroke-width:1}
+.chart .tick{fill:var(--muted);font-family:var(--font-data);font-size:10.5px}
+.chart .reflab{fill:var(--ink-2);font-size:11px;font-family:var(--font-ui)}
+.chart .xh{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:5px;padding:7px 9px;font-size:.78rem;line-height:1.35;min-width:150px;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:3}
+.tip b{display:block;margin-bottom:3px}
+.tip div{display:flex;justify-content:space-between;gap:12px}
+.tip .num{font-size:.78rem}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);font-weight:700;background:var(--bg);position:sticky;top:0}
+th:first-child,td:first-child{text-align:left}
+td{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--font-ui)}
+tbody tr:last-child td{border-bottom:0}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--accent-soft)}
+tr.total td{font-weight:700;background:var(--bg)}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+
+details.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+details.box summary{cursor:pointer;font-weight:700}
+details.box[open] summary{margin-bottom:10px}
+.prose{display:grid;gap:10px;max-width:75ch;color:var(--ink-2);font-size:.92rem}
+.prose b{color:var(--ink)}
+.prose ul{margin:0;padding-left:20px;display:grid;gap:4px}
+textarea{width:100%;min-height:130px;padding:8px;border:1px solid var(--line-strong);border-radius:5px;background:var(--bg);font-family:var(--font-data);font-size:.82rem}
+pre.code{margin:0;padding:10px;background:var(--bg);border-radius:5px;font-family:var(--font-data);font-size:.8rem;overflow-x:auto}
+.msg{font-size:.86rem;color:var(--ink-2)}
+.msg.err{color:var(--crit-ink)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+footer{font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.btn,.tab{transition:border-color .15s,background .15s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Urgent suspected cancer · demand &amp; capacity</span>
+      <h1>Cancer Pathway Capacity Planner</h1>
+      <p class="lede">Forecast referrals, test capacity changes and see the predicted effect on the 28-day Faster Diagnosis Standard and 62-day performance, by tumour site.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="openImport" type="button">Import referral history</button>
+      <button class="btn" id="openScenario" type="button">Share or load a scenario</button>
+      <button class="btn" id="resetBtn" type="button">Reset to example</button>
+    </div>
+  </header>
+
+  <div class="notice" id="exampleNote"><b>Example figures.</b><span>The numbers loaded are illustrative, not real trust data. Replace them with your own in each tumour site, or import weekly referral history. Only aggregate counts are used and nothing you enter leaves your browser.</span></div>
+
+  <section class="panel" id="importPanel" hidden>
+    <div class="section-head"><h2>Import weekly referral history</h2><button class="btn small" type="button" data-close="importPanel">Close</button></div>
+    <div class="prose" style="margin-top:10px">
+      <p>Paste a CSV export or choose a file. One row per week per tumour site. The <b>capacity</b> column is optional. The planner sets each site's baseline to the average of the last 8 weeks and its annual growth from the trend across all weeks.</p>
+<pre class="code">week_start,site,referrals,capacity
+2026-07-06,Breast,214,225
+2026-07-06,Lower GI,301,288
+13/07/2026,Breast,226,225</pre>
+    </div>
+    <div style="display:grid;gap:10px;margin-top:12px">
+      <input type="file" id="csvFile" accept=".csv,text/csv,text/plain">
+      <textarea id="csvText" placeholder="Paste CSV here"></textarea>
+      <div class="row"><button class="btn primary" type="button" id="doImport">Import</button><span class="msg" id="importMsg"></span></div>
+    </div>
+  </section>
+
+  <section class="panel" id="scenarioPanel" hidden>
+    <div class="section-head"><h2>Share or load a scenario</h2><button class="btn small" type="button" data-close="scenarioPanel">Close</button></div>
+    <p class="msg" style="margin-top:8px">A scenario holds every input on this page. Copy it and send it to a colleague; they paste it here and choose Load.</p>
+    <div style="display:grid;gap:10px;margin-top:12px">
+      <textarea id="scenarioText" placeholder="Paste a scenario here, or choose Copy current scenario"></textarea>
+      <div class="row"><button class="btn" type="button" id="copyScenario">Copy current scenario</button><button class="btn primary" type="button" id="loadScenario">Load scenario from text</button><span class="msg" id="scenarioMsg"></span></div>
+    </div>
+  </section>
+
+  <section class="panel scenario" aria-labelledby="scenH">
+    <div class="scenario-head"><h2 id="scenH">Scenario</h2><span class="hint">Applies to every tumour site</span></div>
+    <div class="fields">
+      <div class="field"><label for="g-start">First forecast week (w/c)</label><input type="date" id="g-start" data-g="start"></div>
+      <div class="field"><label for="g-horizon">Forecast horizon</label>
+        <select id="g-horizon" data-g="horizon"><option value="13">13 weeks</option><option value="26">26 weeks</option><option value="52">52 weeks</option><option value="78">78 weeks</option></select></div>
+      <div class="field"><label for="g-demAdj">Demand change</label><div class="range"><input type="range" id="g-demAdj" data-g="demAdj" min="-25" max="40" step="1"><output id="o-demAdj"></output></div></div>
+      <div class="field"><label for="g-capAdj">Capacity change</label><div class="range"><input type="range" id="g-capAdj" data-g="capAdj" min="-30" max="40" step="1"><output id="o-capAdj"></output></div></div>
+      <div class="field"><label for="g-fdsT">FDS target (%)</label><input type="number" id="g-fdsT" data-g="fdsT" min="1" max="99" step="1"></div>
+      <div class="field"><label for="g-d62T">62-day target (%)</label><input type="number" id="g-d62T" data-g="d62T" min="1" max="99" step="1"></div>
+      <div class="field"><label for="g-sigma">Pathway variability</label>
+        <select id="g-sigma" data-g="sigma"><option value="0.3">Low (tightly managed)</option><option value="0.45">Typical</option><option value="0.65">High (many delays)</option></select></div>
+      <label class="check" for="g-season"><input type="checkbox" id="g-season" data-g="season"> Seasonal pattern and bank holidays</label>
+    </div>
+  </section>
+
+  <div class="tabs-wrap"><div class="tabs" role="tablist" id="tabs"></div></div>
+
+  <div class="main" id="main">
+    <aside class="rail panel" id="rail" hidden></aside>
+    <div class="results">
+      <div class="kpis" id="kpis"></div>
+      <div class="charts">
+        <div class="chart-card full">
+          <div class="chart-head"><h2>Referrals and first-appointment capacity per week</h2><div class="legend" id="lg-dem"></div></div>
+          <div class="chart" id="ch-dem"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h2>Waiting for first appointment</h2><div class="legend" id="lg-wl"></div></div>
+          <div class="chart" id="ch-wl"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h2>Predicted performance</h2><div class="legend" id="lg-perf"></div></div>
+          <div class="chart" id="ch-perf"></div>
+        </div>
+      </div>
+
+      <section style="display:grid;gap:10px">
+        <div class="section-head"><h2>By tumour site</h2><span class="hint">Performance is the average of the last 4 forecast weeks. Select a row to edit that site.</span></div>
+        <div class="table-wrap"><table id="siteTable"></table></div>
+      </section>
+
+      <details class="box" id="weeklyBox">
+        <summary>Weekly figures</summary>
+        <div class="row" style="margin-bottom:10px"><button class="btn small" type="button" id="copyWeekly">Copy as CSV for Excel</button><span class="msg" id="weeklyMsg"></span></div>
+        <textarea id="weeklyFallback" hidden readonly aria-label="Weekly results CSV"></textarea>
+        <div class="table-wrap" style="max-height:420px;overflow:auto"><table id="weeklyTable"></table></div>
+      </details>
+    </div>
+  </div>
+
+  <details class="box">
+    <summary>How the model works</summary>
+    <div class="prose">
+      <p><b>Demand.</b> Weekly urgent suspected cancer referrals start at each site's baseline, grow at the annual rate you set and, when seasonality is on, follow a typical monthly pattern (higher in January and March, lower in August and December). The scenario demand change applies on top.</p>
+      <p><b>Capacity.</b> First appointment or straight-to-test slots per week, adjusted by the scenario capacity change and any extra slots from a time-limited initiative. Seasonality also reduces capacity in bank-holiday months. Slots lost to DNAs and late cancellations are taken off; those patients are rebooked and stay on the waiting list.</p>
+      <p><b>Queue.</b> The model tracks every weekly cohort of referrals and books them first in, first out. The current waiting list is spread evenly across past weeks so its average age matches the current average wait you enter.</p>
+      <p><b>Performance.</b> For each cohort seen, the time to first appointment is known. The time from first appointment to diagnosis outcome, and from diagnosis to first treatment, varies around the medians you enter (a log-normal spread set by pathway variability). The predicted FDS is the share of patients whose referral-to-outcome time is 28 days or fewer. The 62-day figure applies the same logic to the patients who convert to cancer.</p>
+      <p><b>Slots needed.</b> The planner searches for the smallest number of core weekly slots that brings the FDS in the last 4 forecast weeks up to target. If even same-week appointments cannot reach the target, the limit is the diagnostic stage, and the planner shows the median diagnostic time you would need instead.</p>
+      <p><b>Limits.</b> This is a planning model. It does not model individual diagnostic tests, inter-provider transfers, clock pauses, or patients who choose to wait. Calibrate it against your own recent FDS and 62-day results before relying on it.</p>
+    </div>
+  </details>
+
+  <footer>Inputs are saved in this browser only. Use “Share or load a scenario” to pass a set of figures to a colleague.</footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+const KEY='cancer-capacity-planner-v1';
+const DEM=[1.08,1.02,1.04,0.97,0.98,1.00,1.02,0.94,1.00,1.03,1.02,0.86];
+const CAPS=[0.97,1.00,1.00,0.92,0.94,1.00,0.97,0.88,1.00,0.98,1.00,0.78];
+const FIELDS=[
+  {g:'Demand',items:[
+    ['refs','Referrals per week','',1],['growth','Annual growth (%)','',0.5],
+    ['wl','Waiting for first appt now','',1],['wait','Average current wait (days)','',1]]},
+  {g:'Capacity',items:[
+    ['cap','First appt / straight-to-test slots per week','wide',1],['dna','DNA and late cancellation (%)','wide',0.5]]},
+  {g:'Pathway timings',items:[
+    ['diag','First appt to diagnosis (median days)','wide',1],['treat','Diagnosis to treatment (median days)','wide',1],['conv','Conversion to cancer (%)','wide',0.5]]},
+  {g:'Extra capacity initiative',items:[
+    ['wliSlots','Extra slots per week','wide',1],['wliFrom','From forecast week','',1],['wliWeeks','For how many weeks','',1]]}
+];
+
+function nextMonday(){const d=new Date();d.setHours(0,0,0,0);const dow=d.getDay();d.setDate(d.getDate()+((8-dow)%7||7));return iso(d);}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function parseISO(s){const p=String(s).split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+let uid=0;
+function site(name,refs,growth,wl,wait,cap,dna,diag,treat,conv){return {id:'s'+(++uid)+Date.now().toString(36),name,refs,growth,wl,wait,cap,dna,diag,treat,conv,wliSlots:0,wliFrom:1,wliWeeks:8,hist:[]};}
+function exampleState(){
+  return {example:true,sel:'all',g:{start:nextMonday(),horizon:26,demAdj:0,capAdj:0,fdsT:80,d62T:75,sigma:0.45,season:true},
+  sites:[
+    site('Breast',220,4,260,7,232,4,10,24,5),
+    site('Lower GI',300,6,900,18,292,7,22,40,3),
+    site('Skin',280,5,450,10,288,5,12,25,6),
+    site('Lung',45,3,40,6,52,6,16,38,18),
+    site('Urology',140,5,380,16,138,6,24,48,10),
+    site('Gynaecology',120,4,200,11,124,6,18,35,4),
+    site('Head and Neck',110,4,160,9,116,7,15,40,4),
+    site('Upper GI',90,4,150,12,90,8,20,40,5),
+    site('Haematology',20,2,15,8,23,5,18,25,15)
+  ]};
+}
+let S;
+try{const raw=localStorage.getItem(KEY);if(raw){S=JSON.parse(raw);}}catch(e){}
+if(!S||!S.sites||!S.g)S=exampleState();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- maths ---------- */
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
+function invPhi(p){let lo=-8,hi=8;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(Phi(m)<p)lo=m;else hi=m;}return (lo+hi)/2;}
+const lnCdf=(x,med,s)=>x<=0?0:Phi((Math.log(x)-Math.log(Math.max(med,0.5)))/s);
+const n0=v=>{v=Number(v);return isFinite(v)?v:0;};
+
+function simulate(s,g,capBase){
+  const H=+g.horizon,start=parseISO(g.start),sig=+g.sigma;
+  const cb=capBase!=null?capBase:n0(s.cap)*(1+g.capAdj/100);
+  const dna=Math.min(95,Math.max(0,n0(s.dna)))/100,conv=n0(s.conv)/100,diag=n0(s.diag),post=n0(s.diag)+n0(s.treat);
+  const q=[];const K=Math.max(1,Math.round(2*n0(s.wait)/7));
+  for(let k=K;k>=1;k--)q.push({a:-(k-1),n:Math.max(0,n0(s.wl))/K});
+  const rows=[];
+  for(let t=0;t<H;t++){
+    const d=addDays(start,7*t),m=d.getMonth();
+    const sd=g.season?DEM[m]:1,sc=g.season?CAPS[m]:1;
+    const dem=Math.max(0,n0(s.refs)*Math.pow(1+n0(s.growth)/100,t/52)*sd*(1+g.demAdj/100));
+    const w0=n0(s.wliFrom)-1;const extra=(n0(s.wliSlots)>0&&t>=w0&&t<w0+n0(s.wliWeeks))?n0(s.wliSlots):0;
+    const slots=Math.max(0,(cb+extra)*sc);const effCap=slots*(1-dna);let cap=effCap;
+    q.push({a:t,n:dem});
+    let seen=0,fok=0,dok=0,ws=0;
+    while(cap>1e-9&&q.length){
+      const c=q[0];const take=Math.min(c.n,cap);const w=(t-c.a)*7+3;
+      fok+=take*lnCdf(28-w,diag,sig);dok+=take*lnCdf(62-w,post,sig*0.85);ws+=take*w;
+      seen+=take;cap-=take;c.n-=take;if(c.n<1e-9)q.shift();
+    }
+    let wl=0,over=0;for(const c of q){wl+=c.n;if(t-c.a>=4)over+=c.n;}
+    rows.push({t,d,dem,slots,eff:effCap,seen,wl,over,oldest:q.length?(t-q[0].a)*7+3:0,fok,dokC:dok*conv,canc:seen*conv,ws});
+  }
+  return rows;
+}
+function finish(rows){rows.forEach(r=>{r.fds=r.seen>0.01?r.fok/r.seen:null;r.d62=r.canc>0.001?r.dokC/r.canc:null;r.wait=r.seen>0.01?r.ws/r.seen:null;});return rows;}
+function aggregate(list){
+  const H=list[0].length;const out=[];
+  for(let t=0;t<H;t++){const r={t,d:list[0][t].d,dem:0,slots:0,eff:0,seen:0,wl:0,over:0,oldest:0,fok:0,dokC:0,canc:0,ws:0};
+    for(const L of list){const x=L[t];['dem','slots','eff','seen','wl','over','fok','dokC','canc','ws'].forEach(k=>r[k]+=x[k]);r.oldest=Math.max(r.oldest,x.oldest);}
+    out.push(r);}
+  return finish(out);
+}
+function tail(rows){const T=rows.slice(-Math.min(4,rows.length));let s=0,f=0,c=0,d=0;T.forEach(r=>{s+=r.seen;f+=r.fok;c+=r.canc;d+=r.dokC;});return {fds:s?f/s:null,d62:c?d/c:null};}
+function solve(s,g){
+  const target=g.fdsT/100,sig=+g.sigma;const dna=Math.min(95,n0(s.dna))/100;
+  const maxDiag=25/Math.exp(sig*invPhi(Math.min(0.999,target)));
+  let hi=(n0(s.refs)*2.5+n0(s.wl)+10)/(1-dna);
+  const ok=c=>{const v=tail(simulate(s,g,c)).fds;return v!=null&&v>=target;};
+  if(!ok(hi))return {ok:false,maxDiag};
+  let lo=0;for(let i=0;i<28;i++){const m=(lo+hi)/2;if(ok(m))hi=m;else lo=m;}
+  return {ok:true,cap:Math.ceil(hi),maxDiag};
+}
+
+/* ---------- formatting ---------- */
+const f0=v=>v==null?'–':Math.round(v).toLocaleString('en-GB');
+const pct=v=>v==null?'–':(v*100).toFixed(1)+'%';
+const sgn=v=>(v>0?'+':v<0?'−':'')+Math.abs(Math.round(v)).toLocaleString('en-GB');
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const wc=d=>d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function status(v,target){if(v==null)return 'warn';if(v>=target/100)return 'good';if(v>=target/100-0.05)return 'warn';return 'crit';}
+const STAT={good:['✓','On track'],warn:['!','At risk'],crit:['✕','Off track']};
+const chip=(st,txt)=>`<span class="chip ${st}"><span class="ic" aria-hidden="true">${STAT[st][0]}</span>${txt||STAT[st][1]}</span>`;
+
+/* ---------- charts ---------- */
+function niceStep(raw){const p=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/p;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p;}
+function drawChart(id,cfg){
+  const host=document.getElementById(id);const W=Math.max(280,Math.round(host.clientWidth||640)),H=cfg.h||230;
+  const m={l:46,r:cfg.refs?78:14,t:14,b:28},iw=W-m.l-m.r,ih=H-m.t-m.b,n=cfg.labels.length;
+  let top=cfg.yMax,step=cfg.step;
+  if(top==null){let mx=0;cfg.series.forEach(s=>s.vals.forEach(v=>{if(v!=null&&v>mx)mx=v;}));step=niceStep((mx||1)/4);top=Math.ceil((mx*1.04)/step)*step||step;}
+  const x=i=>m.l+(n<=1?iw/2:i*iw/(n-1)),y=v=>m.t+ih-(Math.max(0,Math.min(v,top))/top)*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(cfg.label)}">`;
+  for(let v=0;v<=top+1e-9;v+=step){s+=`<line class="${v===0?'base':'grid'}" x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}"/><text class="tick" x="${m.l-6}" y="${y(v)+3.5}" text-anchor="end">${cfg.fmt(v)}</text>`;}
+  let lastX=-99;
+  cfg.labels.forEach((d,i)=>{if(d.getDate()<=7){const xx=x(i);if(xx-lastX>=42&&xx<=W-m.r+4){const lab=MON[d.getMonth()]+(d.getMonth()===0||lastX<0?' '+String(d.getFullYear()).slice(2):'');s+=`<line class="grid" x1="${xx}" x2="${xx}" y1="${m.t+ih}" y2="${m.t+ih+4}"/><text class="tick" x="${xx}" y="${H-8}" text-anchor="middle">${lab}</text>`;lastX=xx;}}});
+  if(cfg.split!=null&&cfg.split>0){const xs=x(cfg.split);s+=`<line class="xh" x1="${xs}" x2="${xs}" y1="${m.t}" y2="${m.t+ih}"/><text class="reflab" x="${xs+5}" y="${m.t+10}">Forecast</text><text class="reflab" x="${xs-5}" y="${m.t+10}" text-anchor="end">Actual</text>`;}
+  (cfg.refs||[]).forEach(r=>{s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(r.v)}" y2="${y(r.v)}" style="stroke:${r.color};stroke-width:1.5;stroke-dasharray:5 4"/><text class="reflab" x="${W-m.r+6}" y="${y(r.v)+4}">${esc(r.label)}</text>`;});
+  cfg.series.forEach(se=>{
+    let segs=[],cur=[];se.vals.forEach((v,i)=>{if(v==null){if(cur.length)segs.push(cur);cur=[];}else cur.push([x(i),y(v)]);});if(cur.length)segs.push(cur);
+    segs.forEach(sg=>{const p=sg.map((pt,i)=>(i?'L':'M')+pt[0].toFixed(1)+','+pt[1].toFixed(1)).join('');
+      if(se.area&&sg.length>1)s+=`<path d="${p}L${sg[sg.length-1][0].toFixed(1)},${y(0)}L${sg[0][0].toFixed(1)},${y(0)}Z" style="fill:${se.color};fill-opacity:.12;stroke:none"/>`;
+      s+=`<path d="${p}" style="fill:none;stroke:${se.color};stroke-width:2;stroke-linejoin:round;stroke-linecap:round${se.dash?';stroke-dasharray:5 4':''}"/>`;});
+    let li=-1;se.vals.forEach((v,i)=>{if(v!=null)li=i;});
+    if(li>=0&&!se.dash)s+=`<circle cx="${x(li)}" cy="${y(se.vals[li])}" r="4" style="fill:${se.color};stroke:var(--surface);stroke-width:2"/>`;
+  });
+  s+=`<g class="hov"></g><rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" style="fill:transparent"/></svg>`;
+  host.innerHTML=s+'<div class="tip" hidden></div>';
+  const svg=host.querySelector('svg'),hov=svg.querySelector('.hov'),tip=host.querySelector('.tip');
+  function move(ev){
+    const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)*W/r.width;
+    const i=Math.max(0,Math.min(n-1,Math.round((px-m.l)/(iw/(Math.max(1,n-1))))));
+    let h=`<line class="xh" x1="${x(i)}" x2="${x(i)}" y1="${m.t}" y2="${m.t+ih}"/>`;let t=`<b>w/c ${wc(cfg.labels[i])}</b>`;
+    cfg.series.forEach(se=>{const v=se.vals[i];if(v==null)return;h+=`<circle cx="${x(i)}" cy="${y(v)}" r="4.5" style="fill:${se.color};stroke:var(--surface);stroke-width:2"/>`;t+=`<div><span>${esc(se.name)}</span><span class="num">${cfg.tipFmt?cfg.tipFmt(v):cfg.fmt(v)}</span></div>`;});
+    hov.innerHTML=h;tip.innerHTML=t;tip.hidden=false;
+    const hw=host.clientWidth,tx=x(i)*r.width/W;const tw=tip.offsetWidth;
+    tip.style.left=Math.max(0,Math.min(hw-tw,tx+(tx>hw/2?-tw-12:12)))+'px';tip.style.top='6px';
+  }
+  svg.addEventListener('pointermove',move);svg.addEventListener('pointerdown',move);
+  svg.addEventListener('pointerleave',()=>{hov.innerHTML='';tip.hidden=true;});
+}
+function legend(id,items){document.getElementById(id).innerHTML=items.map(it=>`<span style="color:${it.color}"><i class="${it.dash?'dash':''}" style="background:${it.color}"></i><span style="color:var(--ink-2)">${esc(it.name)}</span></span>`).join('');}
+
+/* ---------- rendering ---------- */
+let results=null;
+function compute(){
+  const g=S.g;const per=S.sites.map(s=>({s,rows:finish(simulate(s,g)),sol:solve(s,g)}));
+  const all=per.length?aggregate(per.map(p=>p.rows)):[];
+  results={per,all};
+}
+function renderTabs(){
+  const t=document.getElementById('tabs');
+  let h=`<button class="tab" role="tab" data-sel="all" aria-selected="${S.sel==='all'}">All sites</button>`;
+  results.per.forEach(p=>{const st=status(tail(p.rows).fds,S.g.fdsT);h+=`<button class="tab" role="tab" data-sel="${p.s.id}" aria-selected="${S.sel===p.s.id}"><span class="dot ${st}" aria-hidden="true"></span>${esc(p.s.name)}<span class="sr" hidden> (${STAT[st][1]})</span></button>`;});
+  h+=`<button class="tab" type="button" id="addSite">+ Add site</button>`;
+  t.innerHTML=h;
+}
+function renderRail(){
+  const rail=document.getElementById('rail'),main=document.getElementById('main');
+  const s=S.sites.find(x=>x.id===S.sel);
+  if(!s){rail.hidden=true;main.classList.remove('site');return;}
+  rail.hidden=false;main.classList.add('site');
+  let h=`<div class="rail-head"><input type="text" id="f-name" data-f="name" value="${esc(s.name)}" aria-label="Tumour site name"><button class="btn small" type="button" id="delSite">Remove</button></div>`;
+  FIELDS.forEach(gr=>{h+=`<fieldset><legend><h3>${gr.g}</h3></legend><div class="fields">`;
+    gr.items.forEach(([k,lab,cls,st])=>{h+=`<div class="field ${cls}"><label for="f-${k}">${lab}</label><input type="number" id="f-${k}" data-f="${k}" step="${st}" min="0" value="${s[k]}"></div>`;});
+    h+='</div></fieldset>';});
+  if(s.hist&&s.hist.length)h+=`<p class="hint">${s.hist.length} weeks of imported history, last week w/c ${wc(parseISO(s.hist[s.hist.length-1].d))}.</p>`;
+  rail.innerHTML=h;
+}
+function renderResults(){
+  const g=S.g,sel=S.sites.find(x=>x.id===S.sel);
+  const p=sel?results.per.find(x=>x.s.id===sel.id):null;
+  const rows=p?p.rows:results.all;
+  const kp=document.getElementById('kpis');
+  if(!rows.length){kp.innerHTML='<div class="kpi">Add a tumour site to start.</div>';return;}
+  const avg=k=>rows.reduce((a,r)=>a+r[k],0)/rows.length;
+  const dem=avg('dem'),eff=avg('eff'),gap=eff-dem;const tl=tail(rows);
+  const wl0=p?n0(p.s.wl):S.sites.reduce((a,s)=>a+n0(s.wl),0);const last=rows[rows.length-1];
+  const sFds=status(tl.fds,g.fdsT),sD62=status(tl.d62,g.d62T);
+  let needH;
+  if(p){const sol=p.sol;const planned=n0(p.s.cap)*(1+g.capAdj/100);
+    needH=sol.ok?`<div class="k-val num">${f0(sol.cap)}</div><div class="k-sub">core slots per week to reach ${g.fdsT}% FDS. Planned now: ${f0(planned)} (${sgn(sol.cap-planned)}).</div>`
+      :`<div class="k-val" style="font-size:1.1rem">Not reachable with slots alone</div><div class="k-sub">Median time from first appointment to diagnosis needs to fall to about ${Math.floor(sol.maxDiag)} days (now ${p.s.diag}).</div>`;}
+  else{const ok=results.per.filter(x=>x.sol.ok);const tot=ok.reduce((a,x)=>a+x.sol.cap,0);const planned=ok.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0);const bad=results.per.length-ok.length;
+    needH=`<div class="k-val num">${f0(tot)}</div><div class="k-sub">core slots per week across ${ok.length} sites to reach ${g.fdsT}% FDS (${sgn(tot-planned)} on plan).${bad?` ${bad} site${bad>1?'s':''} need faster diagnostics instead.`:''}</div>`;}
+  const clear=rows.findIndex(r=>r.over<1);
+  kp.innerHTML=`
+   <div class="kpi"><span class="k-label">Weekly capacity gap</span><div class="k-val num">${sgn(gap)}</div><div class="k-sub">Capacity after DNAs ${f0(eff)} vs ${f0(dem)} referrals a week (forecast average).</div>${chip(gap>=0?'good':gap>-0.03*dem?'warn':'crit',gap>=0?'Capacity covers demand':gap>-0.03*dem?'Small shortfall':'Shortfall')}</div>
+   <div class="kpi"><span class="k-label">Waiting for first appointment</span><div class="k-val num">${f0(last.wl)}</div><div class="k-sub">At end of forecast, from ${f0(wl0)} now. ${f0(last.over)} waiting over 4 weeks${clear>=0&&rows[0].over>=1?`; under 1 by w/c ${wc(rows[clear].d)}`:''}.</div></div>
+   <div class="kpi"><span class="k-label">28-day FDS</span><div class="k-val num">${pct(tl.fds)}</div><div class="k-sub">Predicted, last 4 forecast weeks. Target ${g.fdsT}%.</div>${chip(sFds)}</div>
+   <div class="kpi"><span class="k-label">62-day referral to treatment</span><div class="k-val num">${pct(tl.d62)}</div><div class="k-sub">Predicted, last 4 forecast weeks. Target ${g.d62T}%.</div>${chip(sD62)}</div>
+   <div class="kpi"><span class="k-label">Slots needed</span>${needH}</div>`;
+
+  // demand chart (with history for a site)
+  const hist=p&&p.s.hist?p.s.hist.slice(-26):[];
+  const labels=hist.map(h=>parseISO(h.d)).concat(rows.map(r=>r.d));
+  const pad=a=>hist.map(()=>null).concat(a);
+  const ser=[{name:'Referrals (forecast)',color:'var(--s1)',vals:pad(rows.map(r=>r.dem))},{name:'Capacity after DNAs',color:'var(--s2)',vals:pad(rows.map(r=>r.eff))}];
+  const lg=[{name:'Referrals (forecast)',color:'var(--s1)'},{name:'Capacity after DNAs',color:'var(--s2)'}];
+  if(hist.length){ser.push({name:'Referrals (actual)',color:'var(--s1)',dash:true,vals:hist.map(h=>h.v).concat(rows.map(()=>null))});lg.push({name:'Referrals (actual)',color:'var(--s1)',dash:true});}
+  legend('lg-dem',lg);
+  drawChart('ch-dem',{label:'Weekly referrals and capacity',labels,series:ser,fmt:f0,split:hist.length||null});
+  legend('lg-wl',[{name:'All waiting',color:'var(--s1)'},{name:'Waiting over 4 weeks',color:'var(--s2)'}]);
+  drawChart('ch-wl',{label:'Waiting list for first appointment',labels:rows.map(r=>r.d),series:[{name:'All waiting',color:'var(--s1)',area:true,vals:rows.map(r=>r.wl)},{name:'Over 4 weeks',color:'var(--s2)',vals:rows.map(r=>r.over)}],fmt:f0});
+  legend('lg-perf',[{name:'28-day FDS',color:'var(--s1)'},{name:'62-day',color:'var(--s3)'}]);
+  drawChart('ch-perf',{label:'Predicted FDS and 62-day performance',labels:rows.map(r=>r.d),yMax:100,step:20,fmt:v=>v+'%',tipFmt:v=>v.toFixed(1)+'%',
+    series:[{name:'28-day FDS',color:'var(--s1)',vals:rows.map(r=>r.fds==null?null:r.fds*100)},{name:'62-day',color:'var(--s3)',vals:rows.map(r=>r.d62==null?null:r.d62*100)}],
+    refs:[{v:g.fdsT,label:'FDS '+g.fdsT+'%',color:'var(--s1)'},{v:g.d62T,label:'62d '+g.d62T+'%',color:'var(--s3)'}]});
+
+  // site table
+  let th=`<thead><tr><th>Tumour site</th><th>Referrals / wk</th><th>Capacity / wk</th><th>Waiting now</th><th>Waiting at end</th><th>Over 4 wks at end</th><th>FDS</th><th>62-day</th><th>Slots needed / wk</th><th>Status</th></tr></thead><tbody>`;
+  results.per.forEach(x=>{const r=x.rows,t=tail(r),a=k=>r.reduce((s,y)=>s+y[k],0)/r.length,l=r[r.length-1];const st=status(t.fds,g.fdsT);
+    th+=`<tr class="clickable" data-sel="${x.s.id}" tabindex="0"><td>${esc(x.s.name)}</td><td>${f0(a('dem'))}</td><td>${f0(a('eff'))}</td><td>${f0(x.s.wl)}</td><td>${f0(l.wl)}</td><td>${f0(l.over)}</td><td>${pct(t.fds)}</td><td>${pct(t.d62)}</td><td>${x.sol.ok?f0(x.sol.cap):'Diagnostics'}</td><td>${chip(st)}</td></tr>`;});
+  if(results.all.length){const r=results.all,t=tail(r),a=k=>r.reduce((s,y)=>s+y[k],0)/r.length,l=r[r.length-1];
+    th+=`<tr class="total"><td>All sites</td><td>${f0(a('dem'))}</td><td>${f0(a('eff'))}</td><td>${f0(S.sites.reduce((s,y)=>s+n0(y.wl),0))}</td><td>${f0(l.wl)}</td><td>${f0(l.over)}</td><td>${pct(t.fds)}</td><td>${pct(t.d62)}</td><td></td><td>${chip(status(t.fds,g.fdsT))}</td></tr>`;}
+  document.getElementById('siteTable').innerHTML=th+'</tbody>';
+
+  // weekly table
+  let wt=`<thead><tr><th>Week commencing</th><th>Referrals</th><th>Slots</th><th>Capacity after DNAs</th><th>Seen</th><th>Waiting</th><th>Over 4 wks</th><th>Avg wait to 1st appt (days)</th><th>FDS</th><th>62-day</th></tr></thead><tbody>`;
+  rows.forEach(r=>{wt+=`<tr><td>${wc(r.d)}</td><td>${f0(r.dem)}</td><td>${f0(r.slots)}</td><td>${f0(r.eff)}</td><td>${f0(r.seen)}</td><td>${f0(r.wl)}</td><td>${f0(r.over)}</td><td>${r.wait==null?'–':r.wait.toFixed(1)}</td><td>${pct(r.fds)}</td><td>${pct(r.d62)}</td></tr>`;});
+  document.getElementById('weeklyTable').innerHTML=wt+'</tbody>';
+}
+function renderGlobals(){
+  const g=S.g;
+  document.querySelectorAll('[data-g]').forEach(el=>{const k=el.dataset.g;if(el.type==='checkbox')el.checked=!!g[k];else el.value=String(g[k]);});
+  outputs();
+}
+function outputs(){document.getElementById('o-demAdj').textContent=(S.g.demAdj>0?'+':'')+S.g.demAdj+'%';document.getElementById('o-capAdj').textContent=(S.g.capAdj>0?'+':'')+S.g.capAdj+'%';}
+function renderAll(full){
+  document.getElementById('exampleNote').hidden=!S.example;
+  compute();renderTabs();if(full)renderRail();renderResults();save();
+}
+
+/* ---------- events ---------- */
+let timer;
+function soon(){clearTimeout(timer);timer=setTimeout(()=>renderAll(false),90);}
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.g){const k=el.dataset.g;let v=el.type==='checkbox'?el.checked:el.value;
+    if(k==='start'){if(!v)return;}else if(k!=='season')v=Number(v);
+    S.g[k]=v;outputs();soon();}
+  else if(el.dataset.f){const s=S.sites.find(x=>x.id===S.sel);if(!s)return;const k=el.dataset.f;
+    s[k]=k==='name'?el.value:(el.value===''?0:Number(el.value));S.example=false;soon();}
+});
+document.addEventListener('change',e=>{if(e.target.dataset.g){const k=e.target.dataset.g;S.g[k]=e.target.type==='checkbox'?e.target.checked:(k==='start'?e.target.value:Number(e.target.value));soon();}});
+function select(id){S.sel=id;renderAll(true);}
+document.addEventListener('click',e=>{
+  const sel=e.target.closest('[data-sel]');if(sel){select(sel.dataset.sel);return;}
+  if(e.target.id==='addSite'){const s=site('New site',50,3,60,10,50,6,15,30,6);S.sites.push(s);select(s.id);setTimeout(()=>{const n=document.getElementById('f-name');if(n){n.focus();n.select();}},0);return;}
+  if(e.target.id==='delSite'){const b=e.target;if(b.dataset.armed){S.sites=S.sites.filter(x=>x.id!==S.sel);S.sel='all';renderAll(true);}else{b.dataset.armed='1';b.textContent='Confirm remove';setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent='Remove';}},4000);}return;}
+  const close=e.target.closest('[data-close]');if(close){document.getElementById(close.dataset.close).hidden=true;return;}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){const tr=e.target.closest('tr[data-sel]');if(tr)select(tr.dataset.sel);}});
+document.getElementById('openImport').onclick=()=>{const p=document.getElementById('importPanel');p.hidden=!p.hidden;document.getElementById('scenarioPanel').hidden=true;};
+document.getElementById('openScenario').onclick=()=>{const p=document.getElementById('scenarioPanel');p.hidden=!p.hidden;document.getElementById('importPanel').hidden=true;};
+const resetBtn=document.getElementById('resetBtn');
+resetBtn.onclick=()=>{if(resetBtn.dataset.armed){S=exampleState();delete resetBtn.dataset.armed;resetBtn.textContent='Reset to example';renderGlobals();renderAll(true);}else{resetBtn.dataset.armed='1';resetBtn.textContent='Confirm: replace all inputs';setTimeout(()=>{delete resetBtn.dataset.armed;resetBtn.textContent='Reset to example';},4000);}};
+
+function copy(text,msgEl,fallback,okMsg){
+  const p=navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(text):Promise.reject();
+  p.then(()=>{msgEl.textContent=okMsg;msgEl.className='msg';},()=>{if(fallback){fallback.hidden=false;fallback.value=text;fallback.select();}msgEl.textContent='Copy was blocked. The text is selected below; press Ctrl+C.';msgEl.className='msg';});
+}
+document.getElementById('copyScenario').onclick=()=>{const t=JSON.stringify({planner:'cancer-capacity-planner',v:1,g:S.g,sites:S.sites},null,1);const ta=document.getElementById('scenarioText');
+  copy(t,document.getElementById('scenarioMsg'),ta,'Scenario copied. Paste it into an email or Teams message.');};
+document.getElementById('loadScenario').onclick=()=>{const m=document.getElementById('scenarioMsg');
+  try{const o=JSON.parse(document.getElementById('scenarioText').value);if(!o.g||!Array.isArray(o.sites))throw 0;
+    S={example:false,sel:'all',g:Object.assign(exampleState().g,o.g),sites:o.sites.map(s=>Object.assign(site(s.name||'Site'),s))};
+    renderGlobals();renderAll(true);m.textContent=`Loaded ${S.sites.length} tumour sites.`;m.className='msg';}
+  catch(e){m.textContent='That text is not a scenario from this planner. Copy the whole scenario, including the first { and last }.';m.className='msg err';}};
+document.getElementById('copyWeekly').onclick=()=>{const sel=S.sites.find(x=>x.id===S.sel);const rows=sel?results.per.find(x=>x.s.id===sel.id).rows:results.all;
+  const lines=['Week commencing,Referrals,Slots,Capacity after DNAs,Seen,Waiting,Over 4 weeks,Avg wait to first appt (days),FDS %,62-day %'];
+  rows.forEach(r=>lines.push([iso(r.d),r.dem.toFixed(1),r.slots.toFixed(1),r.eff.toFixed(1),r.seen.toFixed(1),r.wl.toFixed(1),r.over.toFixed(1),r.wait==null?'':r.wait.toFixed(1),r.fds==null?'':(r.fds*100).toFixed(1),r.d62==null?'':(r.d62*100).toFixed(1)].join(',')));
+  copy(lines.join('\n'),document.getElementById('weeklyMsg'),document.getElementById('weeklyFallback'),`Copied ${rows.length} weeks for ${sel?sel.name:'all sites'}. Paste into Excel.`);};
+
+/* ---------- CSV import ---------- */
+document.getElementById('csvFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{document.getElementById('csvText').value=r.result;};r.readAsText(f);};
+function parseDate(s){s=s.trim().replace(/^"|"$/g,'');let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return new Date(+m[1],+m[2]-1,+m[3]);
+  if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)))return new Date(+(m[3].length===2?'20'+m[3]:m[3]),+m[2]-1,+m[1]);return null;}
+function splitCSV(line){const out=[];let cur='',q=false;for(const ch of line){if(ch==='"')q=!q;else if(ch===','&&!q){out.push(cur);cur='';}else cur+=ch;}out.push(cur);return out.map(x=>x.trim());}
+document.getElementById('doImport').onclick=()=>{
+  const msg=document.getElementById('importMsg');const err=t=>{msg.textContent=t;msg.className='msg err';};
+  const lines=document.getElementById('csvText').value.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return err('Paste at least a header row and one week of data.');
+  const head=splitCSV(lines[0]).map(h=>h.toLowerCase());
+  const iD=head.findIndex(h=>/week|date/.test(h)),iS=head.findIndex(h=>/site|tumou?r|speciality|specialty/.test(h)),iR=head.findIndex(h=>/ref/.test(h)),iC=head.findIndex(h=>/cap|slot/.test(h));
+  if(iD<0||iR<0)return err('The header needs a week (or date) column and a referrals column.');
+  const cur=S.sites.find(x=>x.id===S.sel);
+  if(iS<0&&!cur)return err('There is no site column. Add one, or open a tumour site tab first to import into that site.');
+  const groups={};let bad=0;
+  lines.slice(1).forEach(l=>{const c=splitCSV(l);const d=parseDate(c[iD]||'');const v=Number(c[iR]);if(!d||!isFinite(v)){bad++;return;}
+    const name=iS<0?cur.name:(c[iS]||'').replace(/^"|"$/g,'');(groups[name]=groups[name]||[]).push({d,v,c:iC>=0&&isFinite(Number(c[iC]))&&c[iC]!==''?Number(c[iC]):null});});
+  const names=Object.keys(groups);if(!names.length)return err('No rows could be read. Check the dates are YYYY-MM-DD or DD/MM/YYYY.');
+  const norm=s=>s.toLowerCase().replace(/[^a-z]/g,'');let added=0,updated=0;
+  names.forEach(name=>{const pts=groups[name].sort((a,b)=>a.d-b.d);
+    let s=S.sites.find(x=>norm(x.name)===norm(name))||S.sites.find(x=>norm(x.name).includes(norm(name))||norm(name).includes(norm(x.name)));
+    const last8=pts.slice(-8);const mean=last8.reduce((a,p)=>a+p.v,0)/last8.length;
+    let growth=0;if(pts.length>=8){const xs=pts.map(p=>(p.d-pts[0].d)/6048e5),ys=pts.map(p=>p.v);const mx=xs.reduce((a,b)=>a+b)/xs.length,my=ys.reduce((a,b)=>a+b)/ys.length;
+      let num=0,den=0;xs.forEach((x,i)=>{num+=(x-mx)*(ys[i]-my);den+=(x-mx)*(x-mx);});const slope=den?num/den:0;growth=Math.max(-30,Math.min(50,slope*52/(mean||1)*100));}
+    if(!s){s=site(name,0,0,Math.round(mean*1.5),10,Math.round(mean),6,15,30,6);S.sites.push(s);added++;}else updated++;
+    s.refs=Math.round(mean*10)/10;s.growth=Math.round(growth*10)/10;
+    const caps=last8.filter(p=>p.c!=null);if(caps.length)s.cap=Math.round(caps.reduce((a,p)=>a+p.c,0)/caps.length);
+    s.hist=pts.slice(-52).map(p=>({d:iso(p.d),v:p.v}));});
+  S.example=false;renderAll(true);
+  msg.className='msg';msg.textContent=`Imported ${names.length} site${names.length>1?'s':''} (${updated} updated, ${added} added)${bad?`; skipped ${bad} unreadable row${bad>1?'s':''}`:''}. Check waiting list and timings for each site.`;
+};
+
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>renderResults(),150);});
+renderGlobals();renderAll(true);
+})();
+</script>
+
+</body>
+</html>
