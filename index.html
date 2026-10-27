@@ -502,7 +502,7 @@ function renderNeed(p,rows){
    <div class="need-col"><h3>When it tips over</h3>
      ${tipText(tipF,'FDS',g.fdsT)}
      ${tipText(tip62,'62-day',g.d62T)}
-     ${actBy!=null?item('warn','Act before w/c '+wc(rows[actBy].d),'Extra capacity has to be running by then. Allow for the weeks it takes to set up clinics and staff.'):''}
+     ${tipF===0||tip62===0?item('crit','Act now','At least one standard is already below target in the first forecast week, so extra capacity is needed straight away.'):actBy!=null?item('warn','Act before w/c '+wc(rows[actBy].d),'Extra capacity has to be running by then. Allow for the weeks it takes to set up clinics and staff.'):''}
    </div>
    <div class="need-col"><h3>What is needed</h3>
      ${needText(nf,'FDS '+g.fdsT+'%')}
