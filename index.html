@@ -488,6 +488,9 @@ function renderNeed(p,rows){
     if(p&&n.bad.length)return item('crit','Slots alone will not do it',`${label}: even seeing everyone in their first week misses the target. The pathway after the first appointment has to get quicker (see the guide).`);
     const extra=n.cap-n.plan;
     return item(extra>0?'crit':'good',f0(n.cap)+' slots a week',`${label}: ${extra>0?sgn(extra)+' on the '+f0(n.plan)+' planned, about '+f0(extra*H)+' extra appointments over '+H+' weeks':'the planned '+f0(n.plan)+' a week is enough'}.${!p&&n.bad.length?' '+n.bad.length+' site'+(n.bad.length>1?'s':'')+' cannot reach target with slots alone.':''}`);};
+  // slots a week that would make usable appointments equal referrals on average (the list stops growing)
+  const planAll=sites.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0);
+  const keepPace=eff>0?planAll*dem/eff:null;
   const firstTip=[tipF,tip62].filter(i=>i>0);const actBy=firstTip.length?Math.min(...firstTip):null;
   const sw=p?safe[0]:null;
   el.innerHTML=`
@@ -504,7 +507,8 @@ function renderNeed(p,rows){
    <div class="need-col"><h3>What is needed</h3>
      ${needText(nf,'FDS '+g.fdsT+'%')}
      ${needText(n6,'62-day '+g.d62T+'%')}
-     ${item(wlNow>safeList?'warn':'good',wlNow>safeList?f0(wlNow-safeList)+' one-off appointments':'None','Extra appointments needed now to bring today\'s waiting list down to the safe size, on top of the weekly figure.')}
+     ${keepPace!=null?item(keepPace>planAll*1.005?'crit':'good',f0(Math.ceil(keepPace))+' slots a week','To stop the waiting list growing: usable appointments equal referrals on average over the forecast. The two figures above only reach target by the end of the forecast; with fewer slots than this the list keeps growing afterwards.'):''}
+     ${item(wlNow>safeList?'warn':'good',wlNow>safeList?f0(wlNow-safeList)+' one-off appointments':'None','Backlog above the safe size today. The weekly slots figure already clears this gradually by the end of the forecast; this is the catch-up needed if it is cleared straight away instead.')}
      ${usedShare<0.999?item('','+'+f0(lost)+' a week','Appointments recovered if every bookable slot were used and nobody missed their appointment. Better utilisation is the cheapest extra capacity.'):''}
    </div>`;
   document.getElementById('needScope').textContent=(p?p.s.name:'All tumour sites')+' · forecast averages over '+H+' weeks';
