@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cancer Pathway Capacity Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +34,8 @@
   --good-ink:#3fcf3f; --warn-ink:#fab219; --crit-ink:#f17b7b; color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.45}
 .wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:18px}
 @media (min-width:900px){.wrap{padding-inline:28px}}
@@ -154,6 +161,8 @@ pre.code{margin:0;padding:10px;background:var(--bg);border-radius:5px;font-famil
 footer{font-size:.8rem;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.btn,.tab{transition:border-color .15s,background .15s}}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="top">
@@ -644,3 +653,6 @@ let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>
 renderGlobals();renderAll(true);
 })();
 </script>
+
+</body>
+</html>
