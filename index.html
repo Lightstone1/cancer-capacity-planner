@@ -80,7 +80,7 @@ header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justif
 .tab{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.88rem;display:flex;gap:7px;align-items:center;white-space:nowrap}
 .tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .dot{width:8px;height:8px;border-radius:50%;flex:none}
-.dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.crit{background:var(--crit)}
+.dot.none{background:var(--line-strong)} .dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.crit{background:var(--crit)}
 
 .main{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:980px){.main.site{grid-template-columns:310px minmax(0,1fr)}}
@@ -101,6 +101,7 @@ header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justif
 .kpi .k-val{font-size:1.75rem;font-weight:700;line-height:1.1}
 .kpi .k-sub{font-size:.82rem;color:var(--ink-2)}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;padding:2px 8px 2px 6px;border-radius:999px;border:1px solid var(--line-strong);width:max-content}
+.chip.none{color:var(--muted)} .chip.none .ic{background:var(--line-strong)}
 .chip.good{color:var(--good-ink)} .chip.warn{color:var(--warn-ink)} .chip.crit{color:var(--crit-ink)}
 .chip .ic{width:14px;height:14px;border-radius:50%;display:grid;place-items:center;font-size:10px;color:#fff;line-height:1}
 .chip.good .ic{background:var(--good)} .chip.warn .ic{background:var(--warn);color:#2a1d00} .chip.crit .ic{background:var(--crit)}
@@ -125,6 +126,30 @@ header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justif
 .tip div{display:flex;justify-content:space-between;gap:12px}
 .tip .num{font-size:.78rem}
 
+.trust-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.trust-row .field{min-width:220px}
+.trust-row .hint{flex:1;min-width:200px;padding-bottom:6px}
+.tag{display:inline-block;margin-left:5px;padding:0 5px;border-radius:3px;font-size:.68rem;font-weight:700;letter-spacing:.03em;vertical-align:1px}
+.tag.ptl{background:var(--accent-soft);color:var(--accent)}
+.tag.est{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn-ink)}
+.seen-note{grid-column:1/-1;font-size:.78rem;color:var(--ink-2)}
+.field-note{font-size:.74rem;line-height:1.35;color:var(--muted)}
+.seen-note.warn{color:var(--warn-ink)}
+.season-box summary{cursor:pointer;font-size:.86rem;color:var(--ink-2)}
+.season-box[open] summary{margin-bottom:8px}
+.season-table th,.season-table td{padding:4px 6px;text-align:center}
+.season-table tr.cmp th,.season-table tr.cmp td{color:var(--muted);font-family:var(--font-data);font-size:.8rem}
+.season-table tr.cmp td.diff{color:var(--warn-ink);font-weight:700}
+.season-table td input{width:4.2em;padding:3px 4px;border:1px solid var(--line-strong);border-radius:4px;background:var(--bg);font-family:var(--font-data);font-size:.82rem;text-align:right}
+.notes{max-width:none}
+.notes h3{margin-top:10px;font-size:.82rem}
+.notes ol,.notes ul{margin:0;padding-left:20px;display:grid;gap:5px}
+.notes .table-wrap td,.notes .table-wrap th{white-space:normal;text-align:left;vertical-align:top}
+.notes .table-wrap td{font-family:var(--font-ui)}
+.faq{display:grid;gap:6px}
+.faq details{border:1px solid var(--line);border-radius:5px;padding:8px 12px;background:var(--bg)}
+.faq summary{cursor:pointer;font-weight:700;color:var(--ink)}
+.faq details p{margin-top:6px}
 .need{display:grid;gap:12px}
 .need-grid{display:grid;gap:12px 20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .need-col{display:grid;gap:8px;align-content:start;min-width:0}
@@ -174,11 +199,11 @@ footer{font-size:.8rem;color:var(--muted)}
     <div class="actions">
       <button class="btn" id="openImport" type="button">Import referral history</button>
       <button class="btn" id="openScenario" type="button">Share or load a scenario</button>
-      <button class="btn" id="resetBtn" type="button">Reset to example</button>
+      <button class="btn" id="resetBtn" type="button">Reset to SWAG PTL figures</button>
     </div>
   </header>
 
-  <div class="notice" id="exampleNote"><b>Example figures.</b><span>The numbers loaded are illustrative, not real trust data. Replace them with your own in each tumour site, or import weekly referral history. Only aggregate counts are used and nothing you enter leaves your browser.</span></div>
+  <div class="notice" id="exampleNote"><b id="noteHead">Starting figures.</b><span id="noteText"></span></div>
 
   <section class="panel" id="importPanel" hidden>
     <div class="section-head"><h2>Import weekly referral history</h2><button class="btn small" type="button" data-close="importPanel">Close</button></div>
@@ -207,18 +232,44 @@ footer{font-size:.8rem;color:var(--muted)}
 
   <section class="panel scenario" aria-labelledby="scenH">
     <div class="scenario-head"><h2 id="scenH">Scenario</h2><span class="hint">Applies to every tumour site</span></div>
+    <div class="trust-row">
+      <div class="field"><label for="g-trust">Trust</label>
+        <select id="g-trust"><option value="SWAG">SWAG, all trusts</option><option value="RA7">Bristol NHS FT (NBT + UHBW)</option><option value="RTE">Gloucestershire Hospitals</option><option value="RD1">Royal United Hospitals Bath</option><option value="RNZ">Salisbury</option><option value="RH5">Somerset FT</option></select></div>
+      <button class="btn primary" type="button" id="fillPTL">Fill tumour sites from PTL</button>
+      <span class="hint" id="trustMsg">Replaces every tumour site with this trust's PTL figures and switches the seasonal pattern to the trust.</span>
+    </div>
     <div class="fields">
       <div class="field"><label for="g-start">First forecast week (w/c)</label><input type="date" id="g-start" data-g="start"></div>
       <div class="field"><label for="g-horizon">Forecast horizon</label>
-        <select id="g-horizon" data-g="horizon"><option value="13">13 weeks</option><option value="26">26 weeks</option><option value="52">52 weeks</option><option value="78">78 weeks</option></select></div>
+        <select id="g-horizon" data-g="horizon"><option value="4">4 weeks</option><option value="8">8 weeks</option><option value="13">13 weeks</option><option value="26">26 weeks</option><option value="52">52 weeks</option><option value="78">78 weeks</option></select></div>
       <div class="field"><label for="g-demAdj">Demand change</label><div class="range"><input type="range" id="g-demAdj" data-g="demAdj" min="-25" max="40" step="1"><output id="o-demAdj"></output></div></div>
       <div class="field"><label for="g-capAdj">Capacity change</label><div class="range"><input type="range" id="g-capAdj" data-g="capAdj" min="-30" max="40" step="1"><output id="o-capAdj"></output></div></div>
       <div class="field"><label for="g-fdsT">FDS target (%)</label><input type="number" id="g-fdsT" data-g="fdsT" min="1" max="99" step="1"></div>
       <div class="field"><label for="g-d62T">62-day target (%)</label><input type="number" id="g-d62T" data-g="d62T" min="1" max="99" step="1"></div>
       <div class="field"><label for="g-sigma">Pathway variability</label>
         <select id="g-sigma" data-g="sigma"><option value="0.3">Low (tightly managed)</option><option value="0.45">Typical</option><option value="0.65">High (many delays)</option></select></div>
-      <label class="check" for="g-season"><input type="checkbox" id="g-season" data-g="season"> Seasonal pattern and bank holidays</label>
+      <div class="field"><label for="g-pattern">Seasonal pattern</label>
+        <select id="g-pattern">
+          <optgroup label="From PTL data, Dec 2024 to Sep 2026">
+            <option value="swag">SWAG, all trusts</option>
+            <option value="t_RA7">Bristol NHS FT (NBT + UHBW)</option>
+            <option value="t_RTE">Gloucestershire Hospitals</option>
+            <option value="t_RD1">Royal United Hospitals Bath</option>
+            <option value="t_RNZ">Salisbury</option>
+            <option value="t_RH5">Somerset FT</option>
+          </optgroup>
+          <optgroup label="Other">
+            <option value="generic">Generic (built-in assumption)</option>
+            <option value="custom">Custom (edit below)</option>
+            <option value="off">Off (every month 1.00)</option>
+          </optgroup>
+        </select></div>
     </div>
+    <details class="season-box" id="seasonBox">
+      <summary>Monthly factors (1.00 = an average month). Edit any value to use your own.</summary>
+      <div class="table-wrap"><table id="seasonTable" class="season-table"></table></div>
+      <p class="hint" id="seasonNote"></p>
+    </details>
   </section>
 
   <div class="tabs-wrap"><div class="tabs" role="tablist" id="tabs"></div></div>
@@ -261,14 +312,111 @@ footer{font-size:.8rem;color:var(--muted)}
   </div>
 
   <details class="box">
-    <summary>How the model works</summary>
-    <div class="prose">
-      <p><b>Demand.</b> Weekly urgent suspected cancer referrals start at each site's baseline, grow at the annual rate you set and, when seasonality is on, follow a typical monthly pattern (higher in January and March, lower in August and December). The scenario demand change applies on top.</p>
-      <p><b>Capacity.</b> First appointment or straight-to-test slots per week, adjusted by the scenario capacity change and any extra slots from a time-limited initiative. Seasonality also reduces capacity in bank-holiday months. Two things reduce what is usable: slot utilisation (the share of bookable slots actually booked and used) and DNAs and late cancellations, whose patients are rebooked and stay on the waiting list. Usable capacity = slots x utilisation x (1 - DNA rate).</p>
-      <p><b>Queue.</b> The model tracks every weekly cohort of referrals and books them first in, first out. The current waiting list is spread evenly across past weeks so its average age matches the current average wait you enter.</p>
-      <p><b>Performance.</b> For each cohort seen, the time to first appointment is known. The time from first appointment to diagnosis outcome, and from diagnosis to first treatment, varies around the medians you enter (a log-normal spread set by pathway variability). The predicted FDS is the share of patients whose referral-to-outcome time is 28 days or fewer. The 62-day figure applies the same logic to the patients who convert to cancer.</p>
-      <p><b>What is needed.</b> The planner searches for the smallest number of core weekly slots that brings FDS, and separately 62-day, in the last 4 forecast weeks up to target. If even same-week appointments cannot reach a target, the limit is the pathway after the first appointment. The safe waiting list is the longest list that still lets patients be seen early enough to meet both targets (referrals per day x the longest safe wait). The tipping week is the first forecast week that falls below target.</p>
-      <p><b>Limits.</b> This is a planning model. It does not model individual diagnostic tests, inter-provider transfers, clock pauses, or patients who choose to wait. Calibrate it against your own recent FDS and 62-day results before relying on it.</p>
+    <summary>How the model works: notes, data sources and FAQs</summary>
+    <div class="prose notes">
+      <h3>1. What the planner does</h3>
+      <p>It treats each tumour site's urgent suspected cancer pathway as a queue. Each forecast week, new referrals join the back of the queue, the available first appointments (or straight-to-test slots) see the longest waiters first, and the planner works out each patient's chance of a diagnosis within 28 days (FDS) and, for cancer patients, of starting treatment within 62 days. Everything recalculates in your browser whenever an input changes.</p>
+
+      <h3>2. Actual and predicted</h3>
+      <ul>
+        <li><b>Actual:</b> only what you enter or import. That means today's waiting list and its average wait, referrals per week, slots, utilisation, DNA rate, pathway timings and conversion rate.</li>
+        <li><b>Predicted:</b> every card, chart, table row and line in "What is needed". Imported history appears only as the dashed "actual" line on the referrals chart.</li>
+      </ul>
+
+      <h3>3. Where each input comes from</h3>
+      <p><b>Fill tumour sites from PTL.</b> Pick a trust (or SWAG) in the Scenario panel and press the button. Every tumour site with 5 or more referrals a week is filled in for that trust. Referrals per week come from the last 8 PTL weeks. Growth comes from the trend across 96 weeks of PTL, capped at plus or minus 10% because under two years of history is noisy, and set to 0% for sites under 10 referrals a week. Conversion comes from the last 12 months of CWT FDS data: two week wait patients diagnosed with cancer, divided by all two week wait FDS patients (screening and excluded pathways left out), pooled over the 12 months. The pathway timings (median days to diagnosis and to treatment) are <b>left blank</b>: they need patient-level data from the cancer system, which the aggregate PTL and CWT data do not have. Until they are entered, a site shows its waiting list and capacity but no FDS or 62-day. Slots, waiting list, average wait, utilisation and DNA rate get starting values tagged in amber: slots start where usable appointments equal referrals (a steady waiting list), with a 5% DNA rate. Every field has a short note underneath saying what to enter and where it comes from. The seasonal pattern switches to that trust. Values tagged PTL or placeholder lose their tag once you type over them.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Input</th><th>Source</th><th>Filled by the history import?</th></tr></thead>
+        <tbody>
+          <tr><td>Referrals per week</td><td>PTL "Referrals and Upgrades Made", average of the last 8 weeks</td><td>Yes</td></tr>
+          <tr><td>Annual growth (%)</td><td>Trend in weekly referrals (needs 8 or more weeks)</td><td>Yes</td></tr>
+          <tr><td>Slots per week</td><td>Clinic templates; or the capacity column of the import (average of the last 8 weeks)</td><td>Only with a capacity column</td></tr>
+          <tr><td>Waiting for first appt now; average current wait</td><td>Patient-level PTL or the cancer system: patients with no first appointment yet, days since referral</td><td>No</td></tr>
+          <tr><td>Slot utilisation; DNA rate</td><td>Booking system and outpatient data</td><td>No</td></tr>
+          <tr><td>Median days to diagnosis and to treatment; conversion rate</td><td>Cancer system (e.g. Somerset Cancer Register) or CWT data</td><td>No</td></tr>
+          <tr><td>Seasonal pattern</td><td>Built in, calculated from PTL history for SWAG or for your chosen trust (section 5)</td><td>No (pick a trust or edit)</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>4. The calculation, week by week</h3>
+      <ol>
+        <li><b>Referrals this week</b> = referrals per week x growth to that week x the month's referral factor x (1 + demand change).</li>
+        <li><b>Usable appointments this week</b> = (slots x (1 + capacity change) + any extra initiative slots) x the month's capacity factor x utilisation x (1 - DNA rate).</li>
+        <li><b>Queue:</b> new referrals join the back, and usable appointments go to the longest waiters first. Day one's waiting list is spread over past weeks so that its average age equals the average current wait.</li>
+        <li><b>Waits:</b> a patient seen in the week they were referred counts as waiting 3 days, then 7 more days for each extra week.</li>
+        <li><b>Performance:</b> for each group seen, chance of FDS = chance that diagnosis time is at most 28 days minus their wait, and chance of 62-day = chance that diagnosis plus treatment time is at most 62 days minus their wait (cancer patients only, set by the conversion rate). Times vary around your medians in a log-normal pattern: most patients near the median, a tail of slower ones. Pathway variability sets the spread (0.30, 0.45 or 0.65; the 62-day spread is 0.85 times that).</li>
+        <li><b>Summaries:</b> headline FDS and 62-day are the average of the last 4 forecast weeks. All sites adds the patients together and recalculates the percentages.</li>
+      </ol>
+
+      <h3>5. The seasonal pattern</h3>
+      <p><b>What it is.</b> Twelve monthly factors for referrals and twelve for capacity. 1.00 is an average month; 1.10 means 10% busier than average, 0.91 means 9% less. Every week in a month gets that month's factor, based on its start date. The factors move referrals and capacity between months; they do not change the yearly total of referrals.</p>
+      <p><b>The SWAG PTL pattern (default).</b> Calculated once from the weekly SWAG PTL extracts, December 2024 to September 2026 (96 weeks), all trusts and tumour sites combined. North Bristol and UHBW are counted together throughout because they merged.</p>
+      <ul>
+        <li><b>Referral factors:</b> from Section 4 "Referrals and Upgrades Made", urgent suspected cancer rows only.</li>
+        <li><b>Capacity factors:</b> from Section 5 "Referrals Seen" (patients seen). This is clinic <i>activity</i>, used as a guide to capacity: a quiet month for patients seen may partly reflect fewer referrals, not fewer clinics. Weeks before June 2025 are left out because the extract counted patients seen differently then (about double).</li>
+        <li><b>Method:</b> weekly totals, then the year-on-year growth trend removed (about +6% a year for referrals), then each month's average compared with the average month. Referral factors for October and November rest on one year of data, the other months on two. Capacity factors for June to September rest on two years, the other months on one. Treat single months with some caution.</li>
+        <li><b>What it shows:</b> referrals peak in February and July and dip in December and April. Activity dips in December and January and is highest in March and June.</li>
+      </ul>
+      <p><b>Trust patterns.</b> The same calculation for each trust on its own data: Bristol NHS FT (North Bristol and UHBW combined), Gloucestershire Hospitals, Royal United Hospitals Bath, Salisbury and Somerset FT. Pick one under "Seasonal pattern" and the SWAG factors appear underneath for comparison, with months that differ by more than 0.05 highlighted. Trusts do differ: Salisbury's referrals are high from September to November and its activity dips in January and February; RUH Bath's activity falls in February when most trusts peak; Bristol's referrals stay high in August. One trust's data is noisier than SWAG's, so check a highlighted month is a real local pattern (for example a known clinic change) before relying on it. If in doubt, use SWAG.</p>
+      <p><b>The generic pattern.</b> The planner's original pattern, set by judgment (January surge, Christmas and bank-holiday dips). It is not calculated from data and is not an NHS standard. There is no published NHS table of seasonal factors.</p>
+      <p><b>Custom and Off.</b> Edit any factor to switch to Custom, for example to reflect a planned clinic closure in one month. Off sets every month to 1.00.</p>
+      <p><b>Full week or average week of slots?</b> This matters. The SWAG capacity factors average 1.00, so with the SWAG pattern enter the slots that run in an <b>average</b> week (normal leave already allowed for). The generic factors average about 0.95, so with the generic pattern enter a <b>full</b> week's template. Entering a full template with the SWAG pattern overstates capacity by about 5%, which can turn "off track" into "on track".</p>
+      <p><b>Avoid double counting.</b> If your utilisation figure is measured over the whole year, it may already include clinics lost to holidays. Then either measure utilisation over normal weeks only, or set the seasonal pattern to Off.</p>
+
+      <h3>6. What is needed: which weeks each line uses</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Line</th><th>Weeks used</th><th>How it is worked out</th></tr></thead>
+        <tbody>
+          <tr><td>Demand as % of usable appointments</td><td>All forecast weeks</td><td>Average referrals / average usable appointments. Over 100% the list grows</td></tr>
+          <tr><td>Appointments filled</td><td>All forecast weeks</td><td>Average seen / average usable appointments</td></tr>
+          <tr><td>Safe waiting list</td><td>All forecast weeks + pathway timings</td><td>Longest first wait that still meets both targets (FDS: 28 - median diagnosis x e<sup>spread x z</sup>), then list = weekly referrals x (safe wait - 3) / 7</td></tr>
+          <tr><td>Tipping week</td><td>One week</td><td>First forecast week below target. "Act now" if already below in week 1</td></tr>
+          <tr><td>Slots a week for FDS / 62-day</td><td>Last 4 weeks</td><td>The smallest steady number of bookable slots that brings the last 4 weeks to target (the planner reruns the forecast about 30 times to find it)</td></tr>
+          <tr><td>Extra appointments over the forecast</td><td>All forecast weeks</td><td>(slots needed - planned) x number of weeks</td></tr>
+          <tr><td>Slots to stop the list growing</td><td>All forecast weeks</td><td>Planned slots x demand / usable appointments</td></tr>
+          <tr><td>One-off catch-up</td><td>Today</td><td>Waiting now - safe waiting list</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>7. Limits</h3>
+      <ul>
+        <li>Patients are seen strictly in referral order. Real services prioritise some, so a few wait longer than shown.</li>
+        <li>Diagnosis and treatment times stay fixed even when clinics are under pressure.</li>
+        <li>Only first appointments are planned. Diagnostic test capacity shows up only through the diagnosis median.</li>
+        <li>One extra-capacity period per site; temporary reductions need a Custom seasonal factor.</li>
+        <li>It has not yet been tested against past results. Check week 1 against your latest actual FDS before relying on it.</li>
+      </ul>
+
+      <h3>8. Frequently asked questions</h3>
+      <div class="faq">
+        <details><summary>Is anything on this page actual data?</summary><p>Only your inputs and the imported history line. Every card, chart and figure is a forecast built from them.</p></details>
+        <details><summary>What does picking a trust and "Fill tumour sites from PTL" do?</summary><p>It replaces every tumour site with that trust's figures, so a large trust (Bristol) and a small one (Salisbury) start from their own volumes. The PTL fills referrals per week and growth, and CWT data fills conversion. Slots (set to match referrals), the waiting list, average wait, utilisation and DNA rate are starting values (amber tag) for you to replace. The pathway timings are blank for you to enter. The seasonal pattern also switches to the trust. The figures are as of the latest PTL week in the planner; enter newer figures over them at any time.</p></details>
+        <details><summary>Why are slots not taken from the PTL's "patients seen"?</summary><p>At tumour-site level, patients seen often does not line up with referrals (for example SWAG Breast: 335 seen against 463 referrals a week), probably because some patients are recorded under another heading. Using it as slots made almost every site look overwhelmed, which the stable PTL waiting list shows is not the case. So slots start where usable appointments equal referrals, and patients seen is shown for reference only. Enter your clinic template slots.</p></details>
+        <details><summary>Why are the pathway timings blank?</summary><p>The median days from first appointment to diagnosis, and from diagnosis to treatment, need each patient's dates, which only the cancer system (e.g. Somerset Cancer Register) has. The aggregate PTL and CWT data cannot split a patient's wait into "waiting for a first appointment" and "first appointment to diagnosis", so the planner does not guess. Enter them per tumour site; FDS and 62-day appear as soon as they are in.</p></details>
+        <details><summary>How is conversion to cancer worked out?</summary><p>From CWT FDS data for the trust and tumour site, last 12 months: two week wait (urgent suspected cancer) patients whose pathway ended in "Diagnosis of cancer", divided by all two week wait FDS patients, leaving out pathways excluded from FDS. It is a pooled figure over the 12 months, not an average of monthly rates, and screening referrals are not included. Enter your own figure if you have a better one.</p></details>
+        <details><summary>Should I move the demand change slider?</summary><p>Leave it at 0% for a normal forecast. Referrals per week and growth already describe expected demand from the PTL, and the slider does not change by itself. Use it only for "what if" questions, e.g. +10% for an awareness campaign.</p></details>
+        <details><summary>Do I need to import history to use the planner?</summary><p>No. You can type referrals per week, growth and slots straight into each site. Importing just works out the 8-week average and growth for you, and draws the actual referrals on the chart.</p></details>
+        <details><summary>What exactly does the history import fill in?</summary><p>Referrals per week (average of the last 8 weeks), annual growth (trend across all weeks, if there are 8 or more) and slots per week (if the file has a capacity column). It never changes the waiting list, average wait, utilisation, DNA rate, pathway timings, conversion rate, scenario settings or the seasonal pattern.</p></details>
+        <details><summary>How many weeks of history should I import? Is there a limit?</summary><p>None are required. 8 or more lets it work out growth; 26 to 52 is best. There is no limit on rows; the planner keeps the latest 52 weeks per site and charts the last 26.</p></details>
+        <details><summary>Does the forecast start straight after the last imported week?</summary><p>Only if you set it. Choose the Monday after your last data week in "First forecast week". Importing does not change it.</p></details>
+        <details><summary>Do I need to enter data every week?</summary><p>No. Enter the current position once and the planner projects every week ahead. Refresh it weekly or monthly: re-import recent weeks, update the waiting list and average wait, and move the first forecast week on.</p></details>
+        <details><summary>What is the difference between referrals per week and waiting for first appointment?</summary><p>Referrals per week is the flow: new patients arriving every week. Waiting for first appointment is a snapshot: patients already referred but not yet seen on the first forecast day. Think of a tap (referrals) and the water already in the bath (waiting now).</p></details>
+        <details><summary>Is the average current wait for FDS or 62-day?</summary><p>Both. It is the average days since referral for everyone waiting for a first appointment, cancer and non-cancer, because nobody knows yet who has cancer. Both clocks start at referral. It is not the wait for treatment.</p></details>
+        <details><summary>Where do the seasonal factors come from? Are they an NHS standard?</summary><p>The default comes from SWAG PTL data, December 2024 to September 2026 (section 5). The generic pattern is a judgment-based assumption. Neither is an NHS standard; no official table exists.</p></details>
+        <details><summary>Should I use my trust's seasonal pattern or SWAG's?</summary><p>Use your trust's pattern when you are planning for that trust and its months look sensible against SWAG (shown underneath). It reflects how your own referrals and clinics move through the year. SWAG's pattern is steadier because it pools all five trusts, so use it for alliance-wide planning or when a trust month looks odd. The pattern applies to every tumour site on the page.</p></details>
+        <details><summary>Should I enter a full week or an average week of slots?</summary><p>With the SWAG pattern, an average week (normal leave allowed for). With the generic pattern, a full week's template. See section 5.</p></details>
+        <details><summary>What do slot utilisation and DNA rate do?</summary><p>Both reduce usable appointments: slots x utilisation x (1 - DNA rate). Utilisation covers slots that are not booked or used; DNAs are booked patients who do not attend and go back into the queue. If utilisation is measured over the whole year, watch for double counting with the seasonal pattern.</p></details>
+        <details><summary>How do I enter a change in clinics?</summary><p>Temporary extra slots: Extra capacity initiative. Permanent change: slots per week. Every site: Capacity change. A temporary loss in one month: lower that month's capacity factor (Custom pattern).</p></details>
+        <details><summary>Why is week 1 sometimes much lower than the weeks after?</summary><p>The people already waiting are seen first. If their average wait is high, the first week's patients have already used much of their 28 days, so FDS dips until that group has been seen.</p></details>
+        <details><summary>Is "slots needed" for next week or for the whole forecast?</summary><p>It is a steady number of bookable slots every week of the forecast, chosen so that the last 4 forecast weeks reach the target.</p></details>
+        <details><summary>Why are there two slots figures, "for FDS" and "to stop the list growing"?</summary><p>The target figure only needs to reach target by the end of the forecast; if it is below demand, the list keeps growing afterwards. The "stop growing" figure matches demand, so performance holds.</p></details>
+        <details><summary>What is the safe waiting list?</summary><p>The longest list that still lets patients be seen early enough to meet both targets: referrals per day x the longest safe first wait (Little's law).</p></details>
+        <details><summary>Why does it say "Act now"?</summary><p>At least one standard is already below target in the first forecast week, so extra capacity is needed straight away rather than by a future date.</p></details>
+        <details><summary>Why does "waiting over 4 weeks" stay low even when waits are long?</summary><p>Patients are seen strictly in order, so most wait close to the average and few go far beyond it. Real services prioritise some patients, so the real number would be higher.</p></details>
+        <details><summary>How accurate is it?</summary><p>It has not yet been tested against past results. Run it from a date about 3 months ago with the inputs as they were then, and compare its FDS with what actually happened.</p></details>
+        <details><summary>Can the planner run on PTL data going forward?</summary><p>Partly. The weekly PTL gives referrals, growth, a guide to capacity and the seasonal pattern. The waiting list for first appointments, average wait, pathway timings, slots, utilisation and DNA rate still need entering from other sources.</p></details>
+        <details><summary>Is any patient data entered or sent anywhere?</summary><p>No. Only weekly totals and averages are used, everything is calculated in your browser, and inputs are saved only in your browser. Share figures with "Share or load a scenario".</p></details>
+      </div>
     </div>
   </details>
 
@@ -279,18 +427,52 @@ footer{font-size:.8rem;color:var(--muted)}
 (function(){
 'use strict';
 const KEY='cancer-capacity-planner-v1';
-const DEM=[1.08,1.02,1.04,0.97,0.98,1.00,1.02,0.94,1.00,1.03,1.02,0.86];
-const CAPS=[0.97,1.00,1.00,0.92,0.94,1.00,0.97,0.88,1.00,0.98,1.00,0.78];
+// Monthly factors, Jan..Dec. 1.00 = an average month.
+const PATTERNS={
+  // From weekly SWAG PTL extracts, Dec 2024 to Sep 2026, all trusts combined, trend removed.
+  // Referrals: Section 4 'Referrals and Upgrades Made', urgent suspected cancer. Capacity: Section 5 'Referrals Seen'
+  // (patients seen, from Jun 2025 only: earlier weeks were counted differently in the extract).
+  swag:{dem:[0.95,1.10,1.05,0.93,0.99,1.04,1.07,1.00,1.00,0.98,1.01,0.87],cap:[0.94,1.03,1.07,0.99,0.98,1.05,1.04,0.99,1.01,1.00,1.00,0.91],
+        note:'From weekly SWAG PTL extracts (Dec 2024 to Sep 2026), all trusts and tumour sites combined, with the year-on-year trend removed. Referrals: urgent suspected cancer referrals made. Capacity: patients seen (a guide to clinic activity, not slots), from June 2025 only. October and November are based on one year, other months on two. Capacity factors average 1.00, so enter an average week of slots.'},
+  // One trust's own PTL data, same weeks and method. Noisier than SWAG: one trust, one or two values per month.
+  t_RA7:{dem:[0.95,1.07,1.07,0.94,0.95,1.02,1.07,1.07,1.03,0.97,1.01,0.86],cap:[0.96,1.10,1.10,1.06,0.96,1.05,1.01,0.92,0.99,0.95,0.98,0.90],trust:'Bristol NHS FT (North Bristol + UHBW, combined for all weeks)'},
+  t_RTE:{dem:[0.97,1.14,1.06,0.87,1.01,1.04,1.06,0.95,0.99,1.04,1.01,0.86],cap:[0.88,1.10,1.06,0.95,0.98,1.06,1.04,1.03,0.97,1.02,1.04,0.88],trust:'Gloucestershire Hospitals'},
+  t_RD1:{dem:[0.93,1.10,1.01,0.97,1.02,1.11,1.08,0.95,0.93,0.98,1.00,0.90],cap:[0.97,0.92,1.08,0.94,0.97,1.05,1.07,0.99,1.03,1.07,1.00,0.91],trust:'Royal United Hospitals Bath'},
+  t_RNZ:{dem:[0.94,1.11,0.98,0.91,0.96,0.96,1.05,0.89,1.11,1.09,1.10,0.90],cap:[0.85,0.89,1.07,0.98,1.02,0.94,0.99,1.11,1.12,1.04,1.00,0.98],trust:'Salisbury'},
+  t_RH5:{dem:[0.97,1.11,1.06,0.95,1.02,1.07,1.09,1.00,0.99,0.92,0.96,0.86],cap:[0.98,0.99,1.03,0.99,0.99,1.08,1.07,0.98,0.99,1.00,0.97,0.92],trust:'Somerset FT'},
+  // Original built-in assumption (typical pattern, not from data).
+  generic:{dem:[1.08,1.02,1.04,0.97,0.98,1.00,1.02,0.94,1.00,1.03,1.02,0.86],cap:[0.97,1.00,1.00,0.92,0.94,1.00,0.97,0.88,1.00,0.98,1.00,0.78],
+        note:'A typical pattern set by judgment, not calculated from data and not an NHS standard. Capacity factors average about 0.95, so enter a normal full week of slots.'}
+};
+// Starting figures per trust and tumour site from the SWAG PTL (referrals, patients seen, growth) and CWT (conversion).
+// Generated by forecast/make_ptl_js.py. Waiting list, average wait, DNA rate and pathway timings are not in the aggregate PTL.
+const PTL_SITES={"ptlWeeks":["2026-08-09","2026-09-27"],"cwtMonths":["2025-09-01","2026-08-01"],"calib":{"sigma":0.45,"wait":10.0,"dna":5.0},"trusts":{"SWAG":{"label":"SWAG, all trusts","sites":[{"name":"Breast","refs":463,"seen":355,"growth":5.1,"conv":6.6,"cap":488,"diag":12,"treat":29,"fdsA":80.0,"d62A":71.8},{"name":"Lower GI","refs":456,"seen":407,"growth":-1.2,"conv":4.7,"cap":479,"diag":15,"treat":35,"fdsA":66.9,"d62A":55.0},{"name":"Upper GI","refs":230,"seen":175,"growth":1.9,"conv":5.3,"cap":243,"diag":12,"treat":29,"fdsA":83.0,"d62A":74.8},{"name":"Lung","refs":43,"seen":36,"growth":1.2,"conv":22.3,"cap":45,"diag":13,"treat":31,"fdsA":74.4,"d62A":66.2},{"name":"Skin","refs":854,"seen":905,"growth":8.5,"conv":4.7,"cap":898,"diag":12,"treat":24,"fdsA":82.9,"d62A":83.3},{"name":"Urology","refs":239,"seen":235,"growth":-2.0,"conv":22.9,"cap":252,"diag":15,"treat":30,"fdsA":65.4,"d62A":63.8},{"name":"Gynaecology","refs":310,"seen":317,"growth":3.5,"conv":3.2,"cap":326,"diag":14,"treat":31,"fdsA":71.2,"d62A":64.7},{"name":"Head and Neck","refs":315,"seen":314,"growth":-0.8,"conv":3.4,"cap":332,"diag":13,"treat":33,"fdsA":76.8,"d62A":62.7},{"name":"Haematology","refs":20,"seen":17,"growth":5.0,"conv":35.4,"cap":21,"diag":17,"treat":23,"fdsA":57.1,"d62A":77.0},{"name":"Non-site specific","refs":49,"seen":31,"growth":6.2,"conv":2.6,"cap":52,"diag":15,"treat":27,"fdsA":63.2,"d62A":null},{"name":"Sarcoma","refs":6,"seen":2,"growth":0.0,"conv":5.7,"cap":6,"diag":10,"treat":32,"fdsA":89.7,"d62A":70.7},{"name":"Children's","refs":8,"seen":7,"growth":0.0,"conv":0.1,"cap":8,"diag":11,"treat":14,"fdsA":84.1,"d62A":97.2},{"name":"Other","refs":7,"seen":3,"growth":0.0,"conv":40.0,"cap":7,"diag":16,"treat":19,"fdsA":59.8,"d62A":84.7}]},"RA7":{"label":"Bristol NHS FT (NBT + UHBW)","sites":[{"name":"Breast","refs":176,"seen":85,"growth":9.8,"conv":5.9,"cap":185,"diag":13,"treat":32,"fdsA":74.4,"d62A":62.8},{"name":"Lower GI","refs":157,"seen":121,"growth":-0.1,"conv":4.4,"cap":165,"diag":13,"treat":34,"fdsA":74.3,"d62A":59.8},{"name":"Upper GI","refs":71,"seen":43,"growth":-0.4,"conv":3.7,"cap":75,"diag":10,"treat":31,"fdsA":88.5,"d62A":72.8},{"name":"Lung","refs":16,"seen":13,"growth":3.1,"conv":24.3,"cap":17,"diag":14,"treat":28,"fdsA":71.2,"d62A":70.6},{"name":"Skin","refs":325,"seen":264,"growth":7.1,"conv":4.6,"cap":342,"diag":11,"treat":21,"fdsA":87.9,"d62A":90.0},{"name":"Urology","refs":75,"seen":69,"growth":-2.0,"conv":19.1,"cap":79,"diag":15,"treat":33,"fdsA":64.2,"d62A":57.3},{"name":"Gynaecology","refs":114,"seen":100,"growth":0.5,"conv":2.2,"cap":121,"diag":13,"treat":33,"fdsA":73.9,"d62A":61.9},{"name":"Head and Neck","refs":112,"seen":82,"growth":-6.3,"conv":3.4,"cap":117,"diag":13,"treat":35,"fdsA":74.7,"d62A":57.5},{"name":"Haematology","refs":10,"seen":8,"growth":10.0,"conv":24.6,"cap":11,"diag":16,"treat":25,"fdsA":62.3,"d62A":74.5},{"name":"Sarcoma","refs":6,"seen":2,"growth":0.0,"conv":5.7,"cap":6,"diag":10,"treat":30,"fdsA":89.9,"d62A":75.7}]},"RD1":{"label":"Royal United Hospitals Bath","sites":[{"name":"Breast","refs":11,"seen":17,"growth":10.0,"conv":8.9,"cap":12,"diag":12,"treat":29,"fdsA":83.9,"d62A":74.1},{"name":"Lower GI","refs":74,"seen":76,"growth":-10.0,"conv":3.9,"cap":78,"diag":17,"treat":35,"fdsA":54.1,"d62A":50.6},{"name":"Upper GI","refs":45,"seen":31,"growth":10.0,"conv":5.6,"cap":48,"diag":15,"treat":29,"fdsA":63.9,"d62A":67.1},{"name":"Lung","refs":8,"seen":7,"growth":0.0,"conv":21.1,"cap":9,"diag":16,"treat":31,"fdsA":61.0,"d62A":60.0},{"name":"Skin","refs":92,"seen":184,"growth":5.9,"conv":2.6,"cap":97,"diag":13,"treat":33,"fdsA":76.0,"d62A":63.3},{"name":"Urology","refs":48,"seen":55,"growth":-2.4,"conv":18.6,"cap":51,"diag":15,"treat":32,"fdsA":66.4,"d62A":61.6},{"name":"Gynaecology","refs":74,"seen":90,"growth":10.0,"conv":3.4,"cap":77,"diag":14,"treat":26,"fdsA":72.5,"d62A":76.0},{"name":"Head and Neck","refs":42,"seen":48,"growth":1.5,"conv":2.9,"cap":44,"diag":13,"treat":30,"fdsA":75.2,"d62A":68.2}]},"RH5":{"label":"Somerset FT","sites":[{"name":"Breast","refs":113,"seen":98,"growth":4.9,"conv":6.4,"cap":119,"diag":10,"treat":29,"fdsA":89.7,"d62A":77.8},{"name":"Lower GI","refs":97,"seen":89,"growth":3.0,"conv":5.5,"cap":102,"diag":16,"treat":35,"fdsA":62.5,"d62A":53.3},{"name":"Upper GI","refs":38,"seen":33,"growth":10.0,"conv":8.5,"cap":40,"diag":12,"treat":28,"fdsA":79.9,"d62A":75.2},{"name":"Lung","refs":10,"seen":7,"growth":0.0,"conv":21.1,"cap":10,"diag":11,"treat":33,"fdsA":86.9,"d62A":66.8},{"name":"Skin","refs":224,"seen":192,"growth":10.0,"conv":4.5,"cap":236,"diag":11,"treat":25,"fdsA":84.4,"d62A":81.9},{"name":"Urology","refs":59,"seen":47,"growth":5.7,"conv":29.5,"cap":62,"diag":14,"treat":30,"fdsA":72.3,"d62A":67.4},{"name":"Gynaecology","refs":73,"seen":62,"growth":10.0,"conv":3.4,"cap":77,"diag":14,"treat":26,"fdsA":71.5,"d62A":74.9},{"name":"Head and Neck","refs":78,"seen":72,"growth":9.8,"conv":3.3,"cap":82,"diag":13,"treat":31,"fdsA":76.2,"d62A":66.3},{"name":"Non-site specific","refs":31,"seen":15,"growth":10.0,"conv":2.8,"cap":32,"diag":10,"treat":33,"fdsA":90.3,"d62A":null}]},"RNZ":{"label":"Salisbury","sites":[{"name":"Breast","refs":42,"seen":57,"growth":10.0,"conv":7.0,"cap":44,"diag":9,"treat":29,"fdsA":94.7,"d62A":80.8},{"name":"Lower GI","refs":29,"seen":20,"growth":-9.6,"conv":4.9,"cap":30,"diag":17,"treat":37,"fdsA":54.0,"d62A":46.0},{"name":"Upper GI","refs":21,"seen":10,"growth":-10.0,"conv":6.3,"cap":22,"diag":13,"treat":29,"fdsA":77.3,"d62A":72.2},{"name":"Skin","refs":105,"seen":116,"growth":10.0,"conv":2.2,"cap":111,"diag":11,"treat":27,"fdsA":86.6,"d62A":79.5},{"name":"Urology","refs":18,"seen":17,"growth":-10.0,"conv":25.4,"cap":19,"diag":16,"treat":34,"fdsA":59.3,"d62A":54.1},{"name":"Gynaecology","refs":18,"seen":26,"growth":-7.5,"conv":3.8,"cap":19,"diag":13,"treat":35,"fdsA":75.6,"d62A":57.6},{"name":"Head and Neck","refs":16,"seen":28,"growth":-10.0,"conv":3.4,"cap":17,"diag":11,"treat":45,"fdsA":84.5,"d62A":40.8},{"name":"Non-site specific","refs":6,"seen":6,"growth":0.0,"conv":1.9,"cap":7,"diag":17,"treat":25,"fdsA":54.7,"d62A":null}]},"RTE":{"label":"Gloucestershire Hospitals","sites":[{"name":"Breast","refs":122,"seen":97,"growth":-3.6,"conv":7.3,"cap":128,"diag":14,"treat":26,"fdsA":73.1,"d62A":75.5},{"name":"Lower GI","refs":99,"seen":101,"growth":1.7,"conv":4.9,"cap":104,"diag":13,"treat":35,"fdsA":75.2,"d62A":57.3},{"name":"Upper GI","refs":55,"seen":58,"growth":-3.1,"conv":4.5,"cap":58,"diag":10,"treat":27,"fdsA":91.6,"d62A":82.0},{"name":"Lung","refs":6,"seen":5,"growth":0.0,"conv":24.0,"cap":6,"diag":10,"treat":36,"fdsA":91.6,"d62A":63.4},{"name":"Skin","refs":108,"seen":148,"growth":10.0,"conv":9.5,"cap":113,"diag":14,"treat":19,"fdsA":70.9,"d62A":87.5},{"name":"Urology","refs":39,"seen":47,"growth":-9.3,"conv":24.3,"cap":41,"diag":16,"treat":23,"fdsA":62.2,"d62A":77.2},{"name":"Gynaecology","refs":30,"seen":40,"growth":-10.0,"conv":6.1,"cap":32,"diag":16,"treat":34,"fdsA":58.1,"d62A":54.1},{"name":"Head and Neck","refs":67,"seen":85,"growth":-3.2,"conv":3.7,"cap":70,"diag":13,"treat":30,"fdsA":78.3,"d62A":70.2},{"name":"Non-site specific","refs":7,"seen":7,"growth":0.0,"conv":1.9,"cap":7,"diag":25,"treat":17,"fdsA":22.0,"d62A":null}]}}};
+// Placeholder median days (first appt to diagnosis, diagnosis to treatment) until real figures are entered.
+const SITE_TIMES={'Breast':[10,24],'Lower GI':[22,40],'Upper GI':[20,40],'Lung':[16,38],'Skin':[12,25],'Urology':[24,48],'Gynaecology':[18,35],'Head and Neck':[15,40],'Haematology':[18,25],'Non-site specific':[20,30],'Brain and CNS':[14,30],'Sarcoma':[20,35],"Children's":[14,30],'Other':[18,35]};
+const ONES=Array(12).fill(1);
+function pattern(g){
+  if(g.pattern==='off')return {dem:ONES,cap:ONES};
+  if(g.pattern==='custom'&&Array.isArray(g.dem)&&Array.isArray(g.cap))return {dem:g.dem,cap:g.cap};
+  return PATTERNS[g.pattern]||PATTERNS.swag;
+}
 const FIELDS=[
   {g:'Demand',items:[
-    ['refs','Referrals per week','',1],['growth','Annual growth (%)','',0.5],
-    ['wl','Waiting for first appt now','',1],['wait','Average current wait (days)','',1]]},
+    ['refs','Referrals per week','wide',1,'From PTL when filled: urgent suspected cancer referrals received, average of the last 8 weeks. Update with your latest weekly average.'],
+    ['growth','Annual growth (%)','wide',0.5,'From PTL when filled: yearly trend in referrals received over 96 weeks (capped at plus or minus 10%). Change it if you expect something different.'],
+    ['wl','Waiting for first appt now','wide',1,'Enter: patients referred who have not yet had their first appointment or test, from your PTL. Starts at one week of referrals.'],
+    ['wait','Average current wait (days)','wide',1,'Enter: average days since referral for those patients (cancer and non-cancer). Starts at 7.']]},
   {g:'Capacity',items:[
-    ['cap','First appt / straight-to-test slots per week','wide',1],['util','Slot utilisation (%): share of slots actually booked and used (blank = 100)','wide',1],['dna','DNA and late cancellation (%)','wide',0.5]]},
+    ['cap','First appt / straight-to-test slots per week','wide',1,'Enter your clinic capacity: bookable first appointment and straight-to-test slots in an average week, from clinic templates. Starts equal to referrals (a steady waiting list).'],
+    ['util','Slot utilisation (%)','wide',1,'Enter: share of available slots that actually get booked and used, from booking data. Blank = 100%.'],
+    ['dna','DNA and late cancellation (%)','wide',0.5,'Enter: share of booked slots lost because the patient did not attend or cancelled too late. Starts at 5%.']]},
   {g:'Pathway timings',items:[
-    ['diag','First appt to diagnosis (median days)','wide',1],['treat','Diagnosis to treatment (median days)','wide',1],['conv','Conversion to cancer (%)','wide',0.5]]},
+    ['diag','First appt to diagnosis (median days)','wide',1,'Enter from your cancer system: median days from first appointment to the patient being told the outcome. Needed for FDS.','Enter median days'],
+    ['treat','Diagnosis to treatment (median days)','wide',1,'Enter from your cancer system: median days from diagnosis to first treatment. Needed for 62-day.','Enter median days'],
+    ['conv','Conversion to cancer (%)','wide',0.5,'From CWT when filled: two week wait FDS patients diagnosed with cancer, divided by all two week wait FDS patients (excluded pathways left out), last 12 months pooled. Screening is not included.']]},
   {g:'Extra capacity initiative',items:[
-    ['wliSlots','Extra slots per week','wide',1],['wliFrom','From forecast week','',1],['wliWeeks','For how many weeks','',1]]}
+    ['wliSlots','Extra slots per week','wide',1,'Enter: temporary extra slots a week, e.g. a weekend clinic. Leave 0 if none.'],
+    ['wliFrom','From forecast week','',1,'Week the extra slots start (1 = first forecast week).'],
+    ['wliWeeks','For how many weeks','',1,'How many weeks they run.']]}
 ];
 
 function nextMonday(){const d=new Date();d.setHours(0,0,0,0);const dow=d.getDay();d.setDate(d.getDate()+((8-dow)%7||7));return iso(d);}
@@ -299,24 +481,26 @@ function parseISO(s){const p=String(s).split('-').map(Number);return new Date(p[
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
 let uid=0;
 function site(name,refs,growth,wl,wait,cap,dna,diag,treat,conv){return {id:'s'+(++uid)+Date.now().toString(36),name,refs,growth,wl,wait,cap,util:100,dna,diag,treat,conv,wliSlots:0,wliFrom:1,wliWeeks:8,hist:[]};}
+// Tumour sites for one trust (or 'SWAG') with the PTL figures filled in. src marks where each value came from:
+// 'ptl' = PTL, 'cwt' = CWT data, 'est' = starting value to replace, 'need' = blank, must be entered.
+function sitesFromPTL(code){
+  const t=PTL_SITES.trusts[code]||PTL_SITES.trusts.SWAG;
+  return t.sites.map(p=>{
+    const s=site(p.name,p.refs,p.growth,Math.round(p.refs),7,p.cap,PTL_SITES.calib.dna,'','',p.conv!=null?p.conv:5);
+    s.src={refs:'ptl',growth:'ptl',conv:p.conv!=null?'cwt':'est',cap:'est',wl:'est',wait:'est',dna:'est',util:'est',diag:'need',treat:'need'};
+    return s;});
+}
 function exampleState(){
-  return {example:true,sel:'all',g:{start:nextMonday(),horizon:26,demAdj:0,capAdj:0,fdsT:80,d62T:75,sigma:0.45,season:true},
-  sites:[
-    site('Breast',220,4,260,7,232,4,10,24,5),
-    site('Lower GI',300,6,900,18,292,7,22,40,3),
-    site('Skin',280,5,450,10,288,5,12,25,6),
-    site('Lung',45,3,40,6,52,6,16,38,18),
-    site('Urology',140,5,380,16,138,6,24,48,10),
-    site('Gynaecology',120,4,200,11,124,6,18,35,4),
-    site('Head and Neck',110,4,160,9,116,7,15,40,4),
-    site('Upper GI',90,4,150,12,90,8,20,40,5),
-    site('Haematology',20,2,15,8,23,5,18,25,15)
-  ]};
+  return {example:true,sel:'all',filledFrom:'SWAG',g:{start:nextMonday(),horizon:26,demAdj:0,capAdj:0,fdsT:80,d62T:75,sigma:0.45,pattern:'swag',trust:'SWAG'},
+  sites:sitesFromPTL('SWAG')};
 }
 let S;
 try{const raw=localStorage.getItem(KEY);if(raw){S=JSON.parse(raw);}}catch(e){}
 if(!S||!S.sites||!S.g)S=exampleState();
 S.sites.forEach(s=>{if(s.util==null||s.util==='')s.util=100;});
+// older saved scenarios used an on/off tick box for the built-in pattern
+if(!S.g.pattern)S.g.pattern=S.g.season===false?'off':'swag';
+delete S.g.season;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
 /* ---------- maths ---------- */
@@ -329,17 +513,20 @@ const n0=v=>{v=Number(v);return isFinite(v)?v:0;};
 const utilOf=s=>{const v=Number(s.util);return isFinite(v)&&v>0?Math.min(100,v)/100:1;};
 // usable share of a slot after utilisation and DNAs
 const useOf=s=>utilOf(s)*(1-Math.min(95,Math.max(0,n0(s.dna)))/100);
+// FDS needs the diagnosis median; 62-day also needs the treatment median. Blank means not yet entered.
+const fdsOK=s=>s.diag!==''&&s.diag!=null&&Number(s.diag)>0;
+const d62OK=s=>fdsOK(s)&&s.treat!==''&&s.treat!=null&&Number(s.treat)>0;
 
 function simulate(s,g,capBase){
-  const H=+g.horizon,start=parseISO(g.start),sig=+g.sigma;
+  const H=+g.horizon,start=parseISO(g.start),sig=+g.sigma,pat=pattern(g);
   const cb=capBase!=null?capBase:n0(s.cap)*(1+g.capAdj/100);
-  const use=useOf(s),conv=n0(s.conv)/100,diag=n0(s.diag),post=n0(s.diag)+n0(s.treat);
+  const use=useOf(s),conv=n0(s.conv)/100,diag=n0(s.diag),post=n0(s.diag)+n0(s.treat),okF=fdsOK(s),ok6=d62OK(s);
   const q=[];const K=Math.max(1,Math.round(2*n0(s.wait)/7));
   for(let k=K;k>=1;k--)q.push({a:-(k-1),n:Math.max(0,n0(s.wl))/K});
   const rows=[];
   for(let t=0;t<H;t++){
     const d=addDays(start,7*t),m=d.getMonth();
-    const sd=g.season?DEM[m]:1,sc=g.season?CAPS[m]:1;
+    const sd=n0(pat.dem[m])||0,sc=n0(pat.cap[m])||0;
     const dem=Math.max(0,n0(s.refs)*Math.pow(1+n0(s.growth)/100,t/52)*sd*(1+g.demAdj/100));
     const w0=n0(s.wliFrom)-1;const extra=(n0(s.wliSlots)>0&&t>=w0&&t<w0+n0(s.wliWeeks))?n0(s.wliSlots):0;
     const slots=Math.max(0,(cb+extra)*sc);const effCap=slots*use;let cap=effCap;
@@ -347,27 +534,28 @@ function simulate(s,g,capBase){
     let seen=0,fok=0,dok=0,ws=0;
     while(cap>1e-9&&q.length){
       const c=q[0];const take=Math.min(c.n,cap);const w=(t-c.a)*7+3;
-      fok+=take*lnCdf(28-w,diag,sig);dok+=take*lnCdf(62-w,post,sig*0.85);ws+=take*w;
+      if(okF)fok+=take*lnCdf(28-w,diag,sig);if(ok6)dok+=take*lnCdf(62-w,post,sig*0.85);ws+=take*w;
       seen+=take;cap-=take;c.n-=take;if(c.n<1e-9)q.shift();
     }
     let wl=0,over=0;for(const c of q){wl+=c.n;if(t-c.a>=4)over+=c.n;}
-    rows.push({t,d,dem,slots,eff:effCap,seen,wl,over,oldest:q.length?(t-q[0].a)*7+3:0,fok,dokC:dok*conv,canc:seen*conv,ws});
+    rows.push({t,d,dem,slots,eff:effCap,seen,seenF:okF?seen:0,wl,over,oldest:q.length?(t-q[0].a)*7+3:0,fok,dokC:dok*conv,canc:ok6?seen*conv:0,ws});
   }
   return rows;
 }
-function finish(rows){rows.forEach(r=>{r.fds=r.seen>0.01?r.fok/r.seen:null;r.d62=r.canc>0.001?r.dokC/r.canc:null;r.wait=r.seen>0.01?r.ws/r.seen:null;});return rows;}
+function finish(rows){rows.forEach(r=>{r.fds=r.seenF>0.01?r.fok/r.seenF:null;r.d62=r.canc>0.001?r.dokC/r.canc:null;r.wait=r.seen>0.01?r.ws/r.seen:null;});return rows;}
 function aggregate(list){
   const H=list[0].length;const out=[];
-  for(let t=0;t<H;t++){const r={t,d:list[0][t].d,dem:0,slots:0,eff:0,seen:0,wl:0,over:0,oldest:0,fok:0,dokC:0,canc:0,ws:0};
-    for(const L of list){const x=L[t];['dem','slots','eff','seen','wl','over','fok','dokC','canc','ws'].forEach(k=>r[k]+=x[k]);r.oldest=Math.max(r.oldest,x.oldest);}
+  for(let t=0;t<H;t++){const r={t,d:list[0][t].d,dem:0,slots:0,eff:0,seen:0,seenF:0,wl:0,over:0,oldest:0,fok:0,dokC:0,canc:0,ws:0};
+    for(const L of list){const x=L[t];['dem','slots','eff','seen','seenF','wl','over','fok','dokC','canc','ws'].forEach(k=>r[k]+=x[k]);r.oldest=Math.max(r.oldest,x.oldest);}
     out.push(r);}
   return finish(out);
 }
-function tail(rows){const T=rows.slice(-Math.min(4,rows.length));let s=0,f=0,c=0,d=0;T.forEach(r=>{s+=r.seen;f+=r.fok;c+=r.canc;d+=r.dokC;});return {fds:s?f/s:null,d62:c?d/c:null};}
+function tail(rows){const T=rows.slice(-Math.min(4,rows.length));let s=0,f=0,c=0,d=0;T.forEach(r=>{s+=r.seenF;f+=r.fok;c+=r.canc;d+=r.dokC;});return {fds:s?f/s:null,d62:c?d/c:null};}
 // Smallest number of core bookable slots a week that brings the last 4 forecast weeks up to target.
 // metric 'fds' or 'd62'. If even seeing everyone in their first week fails, the limit is the pathway after the first appointment.
 function solve(s,g,metric){
   metric=metric||'fds';
+  if(metric==='fds'?!fdsOK(s):!d62OK(s))return {ok:false,noT:true};
   const target=(metric==='fds'?g.fdsT:g.d62T)/100,sig=+g.sigma,z=invPhi(Math.min(0.999,target));
   const maxDiag=25/Math.exp(sig*z);                 // FDS: longest median diagnosis time that can still reach target
   const maxPost=59/Math.exp(sig*0.85*z);            // 62-day: longest median diagnosis + treatment time
@@ -380,6 +568,7 @@ function solve(s,g,metric){
 // How long a patient can wait for a first appointment and still meet each target (days from referral),
 // and the waiting list that keeps waits at that level (Little's law: list = arrivals per day x wait).
 function safeWait(s,g,weeklyDemand){
+  if(!d62OK(s))return {noT:true,list:null};
   const sig=+g.sigma;
   const wf=28-n0(s.diag)*Math.exp(sig*invPhi(Math.min(0.999,g.fdsT/100)));
   const w62=62-(n0(s.diag)+n0(s.treat))*Math.exp(sig*0.85*invPhi(Math.min(0.999,g.d62T/100)));
@@ -395,8 +584,8 @@ const sgn=v=>(v>0?'+':v<0?'−':'')+Math.abs(Math.round(v)).toLocaleString('en-G
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const wc=d=>d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function status(v,target){if(v==null)return 'warn';if(v>=target/100)return 'good';if(v>=target/100-0.05)return 'warn';return 'crit';}
-const STAT={good:['✓','On track'],warn:['!','At risk'],crit:['✕','Off track']};
+function status(v,target){if(v==null)return 'none';if(v>=target/100)return 'good';if(v>=target/100-0.05)return 'warn';return 'crit';}
+const STAT={good:['✓','On track'],warn:['!','At risk'],crit:['✕','Off track'],none:['–','Enter pathway timings']};
 const chip=(st,txt)=>`<span class="chip ${st}"><span class="ic" aria-hidden="true">${STAT[st][0]}</span>${txt||STAT[st][1]}</span>`;
 
 /* ---------- charts ---------- */
@@ -459,7 +648,11 @@ function renderRail(){
   rail.hidden=false;main.classList.add('site');
   let h=`<div class="rail-head"><input type="text" id="f-name" data-f="name" value="${esc(s.name)}" aria-label="Tumour site name"><button class="btn small" type="button" id="delSite">Remove</button></div>`;
   FIELDS.forEach(gr=>{h+=`<fieldset><legend><h3>${gr.g}</h3></legend><div class="fields">`;
-    gr.items.forEach(([k,lab,cls,st])=>{h+=`<div class="field ${cls}"><label for="f-${k}">${lab}</label><input type="number" id="f-${k}" data-f="${k}" step="${st}" min="0" value="${s[k]}"></div>`;});
+    gr.items.forEach(([k,lab,cls,st,note,ph])=>{
+      const src=s.src&&s.src[k];
+      const tag=src==='cwt'?'<span class="tag ptl" title="From CWT data">CWT</span>':src==='ptl'?'<span class="tag ptl" title="From PTL data">PTL</span>':src==='est'?'<span class="tag est" title="Starting value: replace with your own figure">placeholder</span>':src==='need'?'<span class="tag est" title="Blank: enter this to see FDS and 62-day">enter</span>':'';
+      h+=`<div class="field ${cls}"><label for="f-${k}">${lab}${tag}</label><input type="number" id="f-${k}" data-f="${k}" step="${st}" min="0" value="${s[k]??''}"${ph?` placeholder="${ph}"`:''}>${note?`<span class="field-note">${note}</span>`:''}</div>`;
+    });
     h+='</div></fieldset>';});
   if(s.hist&&s.hist.length)h+=`<p class="hint">${s.hist.length} weeks of imported history, last week w/c ${wc(parseISO(s.hist[s.hist.length-1].d))}.</p>`;
   rail.innerHTML=h;
@@ -477,17 +670,22 @@ function renderNeed(p,rows){
   const need=key=>{const ok=sites.filter(x=>x[key].ok);return {cap:ok.reduce((a,x)=>a+x[key].cap,0),plan:ok.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0),bad:sites.filter(x=>!x[key].ok)};};
   const nf=need('sol'),n6=need('sol62');
   const safe=sites.map(x=>safeWait(x.s,g,x.rows.reduce((a,y)=>a+y.dem,0)/x.rows.length));
-  const safeList=safe.reduce((a,v)=>a+v.list,0);
+  const safeKnown=safe.filter(v=>v.list!=null),noTimes=safe.length-safeKnown.length;
+  const safeList=safeKnown.length?safeKnown.reduce((a,v)=>a+v.list,0):null;
+  const timingsMsg=n=>n+' site'+(n>1?'s have':' has')+' no pathway timings yet, so '+(n>1?'they are':'it is')+' left out of this figure.';
   const wlNow=sites.reduce((a,x)=>a+n0(x.s.wl),0),wlEnd=rows[H-1].wl;
   const item=(cls,v,t)=>`<div class="need-item ${cls}"><span class="v">${v}</span><span class="t">${t}</span></div>`;
-  const tipText=(i,label,target)=>i<0?item('good','Stays on target',`${label} stays at or above ${target}% to w/c ${wc(rows[H-1].d)}.`)
+  const tipText=(i,label,target)=>!rows.some(r=>(label==='FDS'?r.fds:r.d62)!=null)?item('','Enter pathway timings',`${label} cannot be predicted until the pathway timings are entered.`):i<0?item('good','Stays on target',`${label} stays at or above ${target}% to w/c ${wc(rows[H-1].d)}.`)
     :i===0?item('crit','Already below',`${label} is below ${target}% from the first forecast week.`)
     :item(i<=6?'crit':'warn','w/c '+wc(rows[i].d),`${label} falls below ${target}%, ${i} week${i>1?'s':''} from the start of the forecast.`);
   const needText=(n,label)=>{
     if(!sites.length)return '';
+    if(p&&n.bad.length&&n.bad[0][label.startsWith('FDS')?'sol':'sol62'].noT)return item('','Enter pathway timings',`${label}: add the median days to diagnosis${label.startsWith('FDS')?'':' and to treatment'} for this site to see the slots needed.`);
     if(p&&n.bad.length)return item('crit','Slots alone will not do it',`${label}: even seeing everyone in their first week misses the target. The pathway after the first appointment has to get quicker (see the guide).`);
     const extra=n.cap-n.plan;
-    return item(extra>0?'crit':'good',f0(n.cap)+' slots a week',`${label}: ${extra>0?sgn(extra)+' on the '+f0(n.plan)+' planned, about '+f0(extra*H)+' extra appointments over '+H+' weeks':'the planned '+f0(n.plan)+' a week is enough'}.${!p&&n.bad.length?' '+n.bad.length+' site'+(n.bad.length>1?'s':'')+' cannot reach target with slots alone.':''}`);};
+    const key=label.startsWith('FDS')?'sol':'sol62',noT=n.bad.filter(x=>x[key].noT).length,stuck=n.bad.length-noT;
+    if(!p&&noT===sites.length)return item('','Enter pathway timings',`${label}: no site has its pathway timings yet. Add the median days in each tumour site to see the slots needed.`);
+    return item(extra>0?'crit':'good',f0(n.cap)+' slots a week',`${label}: ${extra>0?sgn(extra)+' on the '+f0(n.plan)+' planned, about '+f0(extra*H)+' extra appointments over '+H+' weeks':'the planned '+f0(n.plan)+' a week is enough'}.${!p&&stuck?' '+stuck+' site'+(stuck>1?'s':'')+' cannot reach target with slots alone.':''}${!p&&noT?' '+timingsMsg(noT):''}`);};
   // slots a week that would make usable appointments equal referrals on average (the list stops growing)
   const planAll=sites.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0);
   const keepPace=eff>0?planAll*dem/eff:null;
@@ -497,7 +695,8 @@ function renderNeed(p,rows){
    <div class="need-col"><h3>How big is the need</h3>
      ${item(ratio==null?'':ratio>1?'crit':ratio>0.9?'warn':'good',ratio==null?'–':(ratio*100).toFixed(0)+'%','Referrals as a share of usable appointments ('+f0(dem)+' vs '+f0(eff)+' a week). Over 100% the waiting list grows every week; over about 90% waits start to rise.')}
      ${item(busy!=null&&busy>0.97?'warn':'',busy==null?'–':(busy*100).toFixed(0)+'%','Appointments filled: share of usable appointments that went to a patient (100% means clinics are full every week). '+(usedShare<1?'Of '+f0(slots)+' bookable slots a week, '+f0(lost)+' are lost to unused slots and DNAs.':'No slots are lost to under-use or DNAs (check the inputs).'))}
-     ${item(wlNow>safeList*1.05?'crit':'good',f0(safeList)+' safe waiting list',(p&&sw?'Patients need a first appointment within '+Math.max(0,Math.floor(sw.w))+' days of referral (FDS '+Math.floor(sw.wf)+' days, 62-day '+Math.floor(sw.w62)+' days). ':'')+'Waiting now '+f0(wlNow)+', at the end of the forecast '+f0(wlEnd)+'.')}
+     ${safeList==null?item('','Enter pathway timings','The safe waiting list needs the median days to diagnosis and to treatment. Waiting now '+f0(wlNow)+', at the end of the forecast '+f0(wlEnd)+'.')
+       :item(wlNow>safeList*1.05?'crit':'good',f0(safeList)+' safe waiting list',(p&&sw&&!sw.noT?'Patients need a first appointment within '+Math.max(0,Math.floor(sw.w))+' days of referral (FDS '+Math.floor(sw.wf)+' days, 62-day '+Math.floor(sw.w62)+' days). ':'')+'Waiting now '+f0(wlNow)+', at the end of the forecast '+f0(wlEnd)+'.'+(noTimes?' '+timingsMsg(noTimes):''))}
    </div>
    <div class="need-col"><h3>When it tips over</h3>
      ${tipText(tipF,'FDS',g.fdsT)}
@@ -508,7 +707,7 @@ function renderNeed(p,rows){
      ${needText(nf,'FDS '+g.fdsT+'%')}
      ${needText(n6,'62-day '+g.d62T+'%')}
      ${keepPace!=null?item(keepPace>planAll*1.005?'crit':'good',f0(Math.ceil(keepPace))+' slots a week','To stop the waiting list growing: usable appointments equal referrals on average over the forecast. The two figures above only reach target by the end of the forecast; with fewer slots than this the list keeps growing afterwards.'):''}
-     ${item(wlNow>safeList?'warn':'good',wlNow>safeList?f0(wlNow-safeList)+' one-off appointments':'None','Backlog above the safe size today. The weekly slots figure already clears this gradually by the end of the forecast; this is the catch-up needed if it is cleared straight away instead.')}
+     ${safeList==null?'':item(wlNow>safeList?'warn':'good',wlNow>safeList?f0(wlNow-safeList)+' one-off appointments':'None','Backlog above the safe size today. The weekly slots figure already clears this gradually by the end of the forecast; this is the catch-up needed if it is cleared straight away instead.')}
      ${usedShare<0.999?item('','+'+f0(lost)+' a week','Appointments recovered if every bookable slot were used and nobody missed their appointment. Better utilisation is the cheapest extra capacity.'):''}
    </div>`;
   document.getElementById('needScope').textContent=(p?p.s.name:'All tumour sites')+' · forecast averages over '+H+' weeks';
@@ -524,17 +723,20 @@ function renderResults(){
   const wl0=p?n0(p.s.wl):S.sites.reduce((a,s)=>a+n0(s.wl),0);const last=rows[rows.length-1];
   const sFds=status(tl.fds,g.fdsT),sD62=status(tl.d62,g.d62T);
   let needH;
-  if(p){const sol=p.sol;const planned=n0(p.s.cap)*(1+g.capAdj/100);
+  if(p&&p.sol.noT){needH='<div class="k-val" style="font-size:1.1rem">Enter pathway timings</div><div class="k-sub">Add the median days to diagnosis and to treatment for this site to see FDS, 62-day and the slots needed.</div>';}
+  else if(p){const sol=p.sol;const planned=n0(p.s.cap)*(1+g.capAdj/100);
     needH=sol.ok?`<div class="k-val num">${f0(sol.cap)}</div><div class="k-sub">core slots per week to reach ${g.fdsT}% FDS. Planned now: ${f0(planned)} (${sgn(sol.cap-planned)}).</div>`
       :`<div class="k-val" style="font-size:1.1rem">Not reachable with slots alone</div><div class="k-sub">Median time from first appointment to diagnosis needs to fall to about ${Math.floor(sol.maxDiag)} days (now ${p.s.diag}).</div>`;}
-  else{const ok=results.per.filter(x=>x.sol.ok);const tot=ok.reduce((a,x)=>a+x.sol.cap,0);const planned=ok.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0);const bad=results.per.length-ok.length;
-    needH=`<div class="k-val num">${f0(tot)}</div><div class="k-sub">core slots per week across ${ok.length} sites to reach ${g.fdsT}% FDS (${sgn(tot-planned)} on plan).${bad?` ${bad} site${bad>1?'s':''} need faster diagnostics instead.`:''}</div>`;}
+  else{const ok=results.per.filter(x=>x.sol.ok);const tot=ok.reduce((a,x)=>a+x.sol.cap,0);const planned=ok.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0);
+    const noT=results.per.filter(x=>x.sol.noT).length,bad=results.per.length-ok.length-noT;
+    needH=!ok.length&&noT?`<div class="k-val" style="font-size:1.1rem">Enter pathway timings</div><div class="k-sub">No tumour site has its median days to diagnosis yet. Add them in each site to see the slots needed.</div>`
+      :`<div class="k-val num">${f0(tot)}</div><div class="k-sub">core slots per week across ${ok.length} site${ok.length===1?'':'s'} to reach ${g.fdsT}% FDS (${sgn(tot-planned)} on plan).${bad?` ${bad} site${bad>1?'s':''} need faster diagnostics instead.`:''}${noT?` ${noT} site${noT>1?'s have':' has'} no pathway timings yet.`:''}</div>`;}
   const clear=rows.findIndex(r=>r.over<1);
   kp.innerHTML=`
    <div class="kpi"><span class="k-label">Weekly capacity gap</span><div class="k-val num">${sgn(gap)}</div><div class="k-sub">Usable capacity ${f0(eff)} vs ${f0(dem)} referrals a week (forecast average, after utilisation and DNAs).</div>${chip(gap>=0?'good':gap>-0.03*dem?'warn':'crit',gap>=0?'Capacity covers demand':gap>-0.03*dem?'Small shortfall':'Shortfall')}</div>
    <div class="kpi"><span class="k-label">Waiting for first appointment</span><div class="k-val num">${f0(last.wl)}</div><div class="k-sub">At end of forecast, from ${f0(wl0)} now. ${f0(last.over)} waiting over 4 weeks${clear>=0&&rows[0].over>=1?`; under 1 by w/c ${wc(rows[clear].d)}`:''}.</div></div>
-   <div class="kpi"><span class="k-label">28-day FDS</span><div class="k-val num">${pct(tl.fds)}</div><div class="k-sub">Predicted, last 4 forecast weeks. Target ${g.fdsT}%.</div>${chip(sFds)}</div>
-   <div class="kpi"><span class="k-label">62-day referral to treatment</span><div class="k-val num">${pct(tl.d62)}</div><div class="k-sub">Predicted, last 4 forecast weeks. Target ${g.d62T}%.</div>${chip(sD62)}</div>
+   <div class="kpi"><span class="k-label">28-day FDS</span><div class="k-val num">${pct(tl.fds)}</div><div class="k-sub">${tl.fds==null?'Enter the pathway timings to see this.':'Predicted, last 4 forecast weeks. Target '+g.fdsT+'%.'}</div>${chip(sFds)}</div>
+   <div class="kpi"><span class="k-label">62-day referral to treatment</span><div class="k-val num">${pct(tl.d62)}</div><div class="k-sub">${tl.d62==null?'Enter the pathway timings to see this.':'Predicted, last 4 forecast weeks. Target '+g.d62T+'%.'}</div>${chip(sD62)}</div>
    <div class="kpi"><span class="k-label">Slots needed</span>${needH}</div>`;
 
   renderNeed(p,rows);
@@ -558,7 +760,7 @@ function renderResults(){
   // site table
   let th=`<thead><tr><th>Tumour site</th><th>Referrals / wk</th><th>Capacity / wk</th><th>Waiting now</th><th>Waiting at end</th><th>Over 4 wks at end</th><th>Demand ÷ capacity</th><th>FDS</th><th>62-day</th><th>Slots / wk for FDS</th><th>Slots / wk for 62-day</th><th>Status</th></tr></thead><tbody>`;
   results.per.forEach(x=>{const r=x.rows,t=tail(r),a=k=>r.reduce((s,y)=>s+y[k],0)/r.length,l=r[r.length-1];const st=status(t.fds,g.fdsT);
-    th+=`<tr class="clickable" data-sel="${x.s.id}" tabindex="0"><td>${esc(x.s.name)}</td><td>${f0(a('dem'))}</td><td>${f0(a('eff'))}</td><td>${f0(x.s.wl)}</td><td>${f0(l.wl)}</td><td>${f0(l.over)}</td><td>${a('eff')>0?(a('dem')/a('eff')*100).toFixed(0)+'%':'–'}</td><td>${pct(t.fds)}</td><td>${pct(t.d62)}</td><td>${x.sol.ok?f0(x.sol.cap):'Diagnostics'}</td><td>${x.sol62.ok?f0(x.sol62.cap):'Pathway'}</td><td>${chip(st)}</td></tr>`;});
+    th+=`<tr class="clickable" data-sel="${x.s.id}" tabindex="0"><td>${esc(x.s.name)}</td><td>${f0(a('dem'))}</td><td>${f0(a('eff'))}</td><td>${f0(x.s.wl)}</td><td>${f0(l.wl)}</td><td>${f0(l.over)}</td><td>${a('eff')>0?(a('dem')/a('eff')*100).toFixed(0)+'%':'–'}</td><td>${pct(t.fds)}</td><td>${pct(t.d62)}</td><td>${x.sol.ok?f0(x.sol.cap):x.sol.noT?'Enter timings':'Diagnostics'}</td><td>${x.sol62.ok?f0(x.sol62.cap):x.sol62.noT?'Enter timings':'Pathway'}</td><td>${chip(st)}</td></tr>`;});
   if(results.all.length){const r=results.all,t=tail(r),a=k=>r.reduce((s,y)=>s+y[k],0)/r.length,l=r[r.length-1];
     th+=`<tr class="total"><td>All sites</td><td>${f0(a('dem'))}</td><td>${f0(a('eff'))}</td><td>${f0(S.sites.reduce((s,y)=>s+n0(y.wl),0))}</td><td>${f0(l.wl)}</td><td>${f0(l.over)}</td><td>${a('eff')>0?(a('dem')/a('eff')*100).toFixed(0)+'%':'–'}</td><td>${pct(t.fds)}</td><td>${pct(t.d62)}</td><td></td><td></td><td>${chip(status(t.fds,g.fdsT))}</td></tr>`;}
   document.getElementById('siteTable').innerHTML=th+'</tbody>';
@@ -572,10 +774,33 @@ function renderGlobals(){
   const g=S.g;
   document.querySelectorAll('[data-g]').forEach(el=>{const k=el.dataset.g;if(el.type==='checkbox')el.checked=!!g[k];else el.value=String(g[k]);});
   outputs();
+  renderSeason();
+  document.getElementById('g-trust').value=g.trust||'SWAG';
+}
+function renderSeason(){
+  const g=S.g,p=pattern(g);
+  document.getElementById('g-pattern').value=g.pattern;
+  let h='<thead><tr><th></th>'+MON.map(m=>`<th>${m}</th>`).join('')+'</tr></thead><tbody>';
+  [['dem','Referrals'],['cap','Capacity']].forEach(([k,lab])=>{
+    h+=`<tr><th style="text-align:left">${lab}</th>`+p[k].map((v,i)=>`<td><input type="number" step="0.01" min="0" id="sf-${k}-${i}" data-sf="${k}" data-m="${i}" value="${(+v).toFixed(2)}" aria-label="${lab} factor ${MON[i]}"></td>`).join('')+'</tr>';});
+  // a trust's pattern is shown with SWAG underneath; months more than 0.05 apart are highlighted
+  const T=PATTERNS[g.pattern]&&PATTERNS[g.pattern].trust?PATTERNS[g.pattern]:null;
+  if(T){[['dem','SWAG referrals'],['cap','SWAG capacity']].forEach(([k,lab])=>{
+    h+=`<tr class="cmp"><th style="text-align:left">${lab}</th>`+PATTERNS.swag[k].map((v,i)=>{const diff=Math.abs(T[k][i]-v)>0.05;return `<td class="${diff?'diff':''}" title="${diff?'Trust differs from SWAG by more than 0.05':''}">${v.toFixed(2)}</td>`;}).join('')+'</tr>';});}
+  document.getElementById('seasonTable').innerHTML=h+'</tbody>';
+  document.getElementById('seasonNote').textContent=g.pattern==='off'?'Seasonality is off: every month counts as an average month.'
+    :g.pattern==='custom'?'Your own factors. Referrals above 1.00 mean a busier month; capacity below 1.00 means fewer clinics running.'
+    :T?(T.trust+': from this trust\'s own weekly PTL data, Dec 2024 to Sep 2026, same method as the SWAG pattern. One trust\'s data is noisier than SWAG\'s, so where a month differs from SWAG by more than 0.05 (highlighted), check whether it is a real local pattern before relying on it. Capacity factors average 1.00, so enter an average week of slots.')
+    :PATTERNS[g.pattern].note;
 }
 function outputs(){document.getElementById('o-demAdj').textContent=(S.g.demAdj>0?'+':'')+S.g.demAdj+'%';document.getElementById('o-capAdj').textContent=(S.g.capAdj>0?'+':'')+S.g.capAdj+'%';}
 function renderAll(full){
-  document.getElementById('exampleNote').hidden=!S.example;
+  // notice: where the starting figures came from, while any placeholder values remain
+  const est=S.sites.reduce((a,s)=>a+(s.src?Object.values(s.src).filter(v=>v==='est').length:0),0);
+  const from=S.filledFrom&&PTL_SITES.trusts[S.filledFrom];
+  document.getElementById('exampleNote').hidden=!(est>0&&from);
+  if(from){document.getElementById('noteHead').textContent=from.label+' figures from PTL.';
+    document.getElementById('noteText').textContent='Referrals per week, growth and conversion come from the SWAG PTL (8 weeks to w/e '+wc(parseISO(PTL_SITES.ptlWeeks[1]))+') and CWT data (to '+MON[parseISO(PTL_SITES.cwtMonths[1]).getMonth()]+' '+parseISO(PTL_SITES.cwtMonths[1]).getFullYear()+'). Pathway timings are left blank for you to enter from your cancer system: FDS and 62-day appear once they are in. '+est+' values tagged "placeholder" (slots, waiting list, average wait, utilisation, DNA rate) are starting values to replace with your own figures. Only aggregate counts are used and nothing you enter leaves your browser.';}
   compute();renderTabs();if(full)renderRail();renderResults();save();
 }
 
@@ -588,7 +813,35 @@ document.addEventListener('input',e=>{
     if(k==='start'){if(!v)return;}else if(k!=='season')v=Number(v);
     S.g[k]=v;outputs();soon();}
   else if(el.dataset.f){const s=S.sites.find(x=>x.id===S.sel);if(!s)return;const k=el.dataset.f;
-    s[k]=k==='name'?el.value:(el.value===''?0:Number(el.value));S.example=false;soon();}
+    s[k]=k==='name'?el.value:(el.value===''?0:Number(el.value));S.example=false;
+    // once someone types a value it is theirs, so drop its PTL / placeholder tag
+    if(s.src&&s.src[k]){delete s.src[k];const tag=el.parentElement.querySelector('.tag');if(tag)tag.remove();}
+    soon();}
+});
+// Fill tumour sites from the PTL for the chosen trust (two clicks, because it replaces every site)
+const fillBtn=document.getElementById('fillPTL'),trustSel=document.getElementById('g-trust');
+trustSel.addEventListener('change',()=>{delete fillBtn.dataset.armed;fillBtn.textContent='Fill tumour sites from PTL';});
+fillBtn.addEventListener('click',()=>{
+  const code=trustSel.value,label=PTL_SITES.trusts[code].label;
+  if(!fillBtn.dataset.armed){fillBtn.dataset.armed='1';fillBtn.textContent='Confirm: replace all sites with '+label;
+    setTimeout(()=>{if(fillBtn.dataset.armed){delete fillBtn.dataset.armed;fillBtn.textContent='Fill tumour sites from PTL';}},5000);return;}
+  delete fillBtn.dataset.armed;fillBtn.textContent='Fill tumour sites from PTL';
+  S.sites=sitesFromPTL(code);S.filledFrom=code;S.g.trust=code;S.g.pattern=code==='SWAG'?'swag':'t_'+code;S.sel='all';S.example=false;
+  renderSeason();renderAll(true);
+  document.getElementById('trustMsg').textContent='Filled '+S.sites.length+' tumour sites for '+label+'. Check the fields tagged "placeholder".';
+});
+document.getElementById('g-pattern').addEventListener('change',e=>{
+  const v=e.target.value;
+  // switching to Custom starts from the factors currently in use
+  if(v==='custom'&&!(Array.isArray(S.g.dem)&&Array.isArray(S.g.cap))){const p=pattern(S.g);S.g.dem=p.dem.slice();S.g.cap=p.cap.slice();}
+  S.g.pattern=v;renderSeason();soon();
+});
+document.addEventListener('input',e=>{
+  const el=e.target;if(!el.dataset.sf)return;
+  if(S.g.pattern!=='custom'){const p=pattern(S.g);S.g.dem=p.dem.slice();S.g.cap=p.cap.slice();S.g.pattern='custom';document.getElementById('g-pattern').value='custom';}
+  const v=Number(el.value);S.g[el.dataset.sf][+el.dataset.m]=isFinite(v)&&v>=0?v:0;
+  document.getElementById('seasonNote').textContent='Your own factors. Referrals above 1.00 mean a busier month; capacity below 1.00 means fewer clinics running.';
+  soon();
 });
 document.addEventListener('change',e=>{if(e.target.dataset.g){const k=e.target.dataset.g;S.g[k]=e.target.type==='checkbox'?e.target.checked:(k==='start'?e.target.value:Number(e.target.value));soon();}});
 function select(id){S.sel=id;renderAll(true);}
@@ -602,7 +855,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'){const tr=e.target.cl
 document.getElementById('openImport').onclick=()=>{const p=document.getElementById('importPanel');p.hidden=!p.hidden;document.getElementById('scenarioPanel').hidden=true;};
 document.getElementById('openScenario').onclick=()=>{const p=document.getElementById('scenarioPanel');p.hidden=!p.hidden;document.getElementById('importPanel').hidden=true;};
 const resetBtn=document.getElementById('resetBtn');
-resetBtn.onclick=()=>{if(resetBtn.dataset.armed){S=exampleState();delete resetBtn.dataset.armed;resetBtn.textContent='Reset to example';renderGlobals();renderAll(true);}else{resetBtn.dataset.armed='1';resetBtn.textContent='Confirm: replace all inputs';setTimeout(()=>{delete resetBtn.dataset.armed;resetBtn.textContent='Reset to example';},4000);}};
+resetBtn.onclick=()=>{if(resetBtn.dataset.armed){S=exampleState();delete resetBtn.dataset.armed;resetBtn.textContent='Reset to SWAG PTL figures';renderGlobals();renderAll(true);}else{resetBtn.dataset.armed='1';resetBtn.textContent='Confirm: replace all inputs';setTimeout(()=>{delete resetBtn.dataset.armed;resetBtn.textContent='Reset to SWAG PTL figures';},4000);}};
 
 function copy(text,msgEl,fallback,okMsg){
   const p=navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(text):Promise.reject();
@@ -647,7 +900,8 @@ document.getElementById('doImport').onclick=()=>{
       let num=0,den=0;xs.forEach((x,i)=>{num+=(x-mx)*(ys[i]-my);den+=(x-mx)*(x-mx);});const slope=den?num/den:0;growth=Math.max(-30,Math.min(50,slope*52/(mean||1)*100));}
     if(!s){s=site(name,0,0,Math.round(mean*1.5),10,Math.round(mean),6,15,30,6);S.sites.push(s);added++;}else updated++;
     s.refs=Math.round(mean*10)/10;s.growth=Math.round(growth*10)/10;
-    const caps=last8.filter(p=>p.c!=null);if(caps.length)s.cap=Math.round(caps.reduce((a,p)=>a+p.c,0)/caps.length);
+    if(s.src){delete s.src.refs;delete s.src.growth;}
+    const caps=last8.filter(p=>p.c!=null);if(caps.length){s.cap=Math.round(caps.reduce((a,p)=>a+p.c,0)/caps.length);if(s.src)delete s.src.cap;}
     s.hist=pts.slice(-52).map(p=>({d:iso(p.d),v:p.v}));});
   S.example=false;renderAll(true);
   msg.className='msg';msg.textContent=`Imported ${names.length} site${names.length>1?'s':''} (${updated} updated, ${added} added)${bad?`; skipped ${bad} unreadable row${bad>1?'s':''}`:''}. Check waiting list and timings for each site.`;
