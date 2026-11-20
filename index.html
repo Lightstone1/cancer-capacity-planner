@@ -334,6 +334,7 @@ footer{font-size:.8rem;color:var(--muted)}
           <tr><td>Waiting for first appt now; average current wait</td><td>Patient-level PTL or the cancer system: patients with no first appointment yet, days since referral</td><td>No</td></tr>
           <tr><td>Slots lost (unbooked, late cancellations, DNAs)</td><td>Booking system and outpatient data</td><td>No</td></tr>
           <tr><td>Median days from first appointment to diagnosis and to first treatment; conversion rate</td><td>Cancer system (e.g. Somerset Cancer Register) or CWT data</td><td>No</td></tr>
+          <tr><td>Medians from referral (optional): to first seen, to diagnosis (cancer and non-cancer), to first treatment</td><td>SDCS or the cancer system, two week wait patients only if it can be filtered</td><td>No</td></tr>
           <tr><td>Seasonal pattern</td><td>Built in, calculated from PTL history for SWAG or for your chosen trust (section 5)</td><td>No (pick a trust or edit)</td></tr>
         </tbody>
       </table></div>
@@ -344,7 +345,7 @@ footer{font-size:.8rem;color:var(--muted)}
         <li><b>Usable appointments this week</b> = (slots x (1 + capacity change) + any extra initiative slots) x the month's capacity factor x (1 - slots lost).</li>
         <li><b>Queue:</b> new referrals join the back, and usable appointments go to the longest waiters first. Day one's waiting list is spread over past weeks so that its average age equals the average current wait.</li>
         <li><b>Waits:</b> a patient seen in the week they were referred counts as waiting 3 days, then 7 more days for each extra week.</li>
-        <li><b>Performance:</b> for each group seen, chance of FDS = chance that diagnosis time is at most 28 days minus their wait, and chance of 62-day = chance that diagnosis plus treatment time is at most 62 days minus their wait (cancer patients only, set by the conversion rate). Times vary around your medians in a log-normal pattern: most patients near the median, a tail of slower ones. Pathway variability sets the spread (0.30, 0.45 or 0.65; the 62-day spread is 0.85 times that).</li>
+        <li><b>Performance:</b> for each group seen, chance of FDS = chance that diagnosis time is at most 28 days minus their wait, and chance of 62-day = chance that first appointment to treatment is at most 62 days minus their wait (cancer patients only, set by the conversion rate). If cancer and non-cancer diagnosis times are both entered, FDS mixes the two using the conversion rate. Times vary around your medians in a log-normal pattern: most patients near the median, a tail of slower ones. Pathway variability sets the spread (0.30, 0.45 or 0.65; the 62-day spread is 0.85 times that).</li>
         <li><b>Summaries:</b> headline FDS and 62-day are the average of the last 4 forecast weeks. All sites adds the patients together and recalculates the percentages.</li>
       </ol>
 
@@ -393,6 +394,7 @@ footer{font-size:.8rem;color:var(--muted)}
         <details><summary>What does picking a trust and "Fill tumour sites from PTL" do?</summary><p>It replaces every tumour site with that trust's figures, so a large trust (Bristol) and a small one (Salisbury) start from their own volumes. The PTL fills referrals per week and growth, and CWT data fills conversion. Slots (set to match referrals), the waiting list, average wait and slots lost are starting values (amber tag) for you to replace. The pathway timings are blank for you to enter. The seasonal pattern also switches to the trust. The figures are as of the latest PTL week in the planner; enter newer figures over them at any time.</p></details>
         <details><summary>Why are slots not taken from the PTL's "patients seen"?</summary><p>At tumour-site level, patients seen often does not line up with referrals (for example SWAG Breast: 335 seen against 463 referrals a week), probably because some patients are recorded under another heading. Using it as slots made almost every site look overwhelmed, which the stable PTL waiting list shows is not the case. So slots start where usable appointments equal referrals, and patients seen is shown for reference only. Enter your clinic template slots.</p></details>
         <details><summary>Why are the pathway timings blank?</summary><p>The median days from first appointment to diagnosis, and from first appointment to first treatment, need each patient's dates, which only the cancer system (e.g. Somerset Cancer Register) has. The aggregate PTL and CWT data cannot split a patient's wait into "waiting for a first appointment" and "first appointment to diagnosis", so the planner does not guess. Enter them per tumour site; FDS and 62-day appear as soon as they are in.</p></details>
+        <details><summary>I have medians from referral (e.g. SDCS). Where do they go?</summary><p>In "Medians from referral". Enter them as they are: referral to first seen, referral to diagnosis for non-cancer and for cancer patients, and referral to first treatment. The planner takes the wait to first appointment off the others, because it works out that wait itself from the waiting list and slots; entering a referral-based figure in the pathway timing boxes would count it twice. The worked-out stage times appear under the inputs and are used instead of the pathway timing boxes. With both diagnosis figures, FDS mixes cancer and non-cancer patients using the conversion rate, which matters for sites with high conversion such as Urology and Lung. While the average current wait is a placeholder, it is set to half the median wait to first appointment. Use two week wait patients only if the data can be filtered: screening, breast symptomatic and consultant upgrades start their clocks differently.</p></details>
         <details><summary>How is conversion to cancer worked out?</summary><p>From CWT FDS data for the trust and tumour site, last 12 months: two week wait (urgent suspected cancer) patients whose pathway ended in "Diagnosis of cancer", divided by all two week wait FDS patients, leaving out pathways excluded from FDS. It is a pooled figure over the 12 months, not an average of monthly rates, and screening referrals are not included. Enter your own figure if you have a better one.</p></details>
         <details><summary>Should I move the demand change slider?</summary><p>Leave it at 0% for a normal forecast. Referrals per week and growth already describe expected demand from the PTL, and the slider does not change by itself. Use it only for "what if" questions, e.g. +10% for an awareness campaign.</p></details>
         <details><summary>Do I need to import history to use the planner?</summary><p>No. You can type referrals per week, growth and slots straight into each site. Importing just works out the 8-week average and growth for you, and draws the actual referrals on the chart.</p></details>
@@ -468,6 +470,11 @@ const FIELDS=[
     ['diag','First appt to diagnosis (median days)','wide',1,'Enter from your cancer system: median days from first appointment to the patient being told the outcome. Needed for FDS.','Enter median days'],
     ['treat','First appt to first treatment (median days)','wide',1,'Enter from your cancer system: median days from first appointment to first treatment (not from referral). Needed for 62-day.','Enter median days'],
     ['conv','Conversion to cancer (%)','wide',0.5,'From CWT when filled: two week wait FDS patients diagnosed with cancer, divided by all two week wait FDS patients (excluded pathways left out), last 12 months pooled. Screening is not included.']]},
+  {g:'Medians from referral (optional, e.g. SDCS)',items:[
+    ['rFirst','Referral to first seen (median days)','wide',1,'Optional. Urgent suspected cancer patients only. With any box below, the planner takes this off them to get the stage times, so you do not have to.'],
+    ['rDxNon','Referral to diagnosis, non-cancer (median days)','wide',1,'Optional. Patients told they do not have cancer. Used instead of first appt to diagnosis for them.'],
+    ['rDxCan','Referral to diagnosis, cancer (median days)','wide',1,'Optional. Patients diagnosed with cancer. FDS then mixes the two groups using the conversion rate.'],
+    ['rTreat','Referral to first treatment (median days)','wide',1,'Optional. Two week wait patients on the 62-day pathway; leave out consultant upgrades and screening if you can. Used instead of first appt to first treatment.']]},
   {g:'Extra capacity initiative',items:[
     ['wliSlots','Extra slots per week','wide',1,'Enter: temporary extra slots a week, e.g. a weekend clinic. Leave 0 if none.'],
     ['wliFrom','From forecast week','',1,'Week the extra slots start (1 = first forecast week).'],
@@ -479,7 +486,7 @@ function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'
 function parseISO(s){const p=String(s).split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
 let uid=0;
-function site(name,refs,growth,wl,wait,cap,dna,diag,treat,conv){return {id:'s'+(++uid)+Date.now().toString(36),name,refs,growth,wl,wait,cap,util:100,dna,diag,treat,conv,wliSlots:0,wliFrom:1,wliWeeks:8,hist:[]};}
+function site(name,refs,growth,wl,wait,cap,dna,diag,treat,conv){return {id:'s'+(++uid)+Date.now().toString(36),name,refs,growth,wl,wait,cap,util:100,dna,diag,treat,conv,rFirst:'',rDxNon:'',rDxCan:'',rTreat:'',wliSlots:0,wliFrom:1,wliWeeks:8,hist:[]};}
 // Tumour sites for one trust (or 'SWAG') with the PTL figures filled in. src marks where each value came from:
 // 'ptl' = PTL, 'cwt' = CWT data, 'est' = starting value to replace, 'need' = blank, must be entered.
 function sitesFromPTL(code){
@@ -513,20 +520,29 @@ function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);con
 const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
 function invPhi(p){let lo=-8,hi=8;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(Phi(m)<p)lo=m;else hi=m;}return (lo+hi)/2;}
 const lnCdf=(x,med,s)=>x<=0?0:Phi((Math.log(x)-Math.log(Math.max(med,0.5)))/s);
+// chance of a diagnosis within x days of the first appointment: cancer and non-cancer patients mixed by the conversion rate
+const fdsP=(x,dN,dC,c,s)=>c*lnCdf(x,dC,s)+(1-c)*lnCdf(x,dN,s);
 const n0=v=>{v=Number(v);return isFinite(v)?v:0;};
 // share of bookable slots that are actually used (blank or 0 means 100%)
 const utilOf=s=>{const v=Number(s.util);return isFinite(v)&&v>0?Math.min(100,v)/100:1;};
 // usable share of a slot after slots lost for any reason (utilisation is kept at 100%)
 const useOf=s=>utilOf(s)*(1-Math.min(95,Math.max(0,n0(s.dna)))/100);
 // FDS needs the median to diagnosis; 62-day also needs the median first appt to first treatment. Blank means not yet entered.
-const fdsOK=s=>s.diag!==''&&s.diag!=null&&Number(s.diag)>0;
-const d62OK=s=>fdsOK(s)&&s.treat!==''&&s.treat!=null&&Number(s.treat)>0;
+// Medians from referral (e.g. SDCS) become stage times by taking off the median wait to first appointment.
+const fromRef=(s,k)=>{const r=n0(s.rFirst),v=n0(s[k]);return r>0&&v>0?Math.max(1,v-r):0;};
+const diagNonOf=s=>fromRef(s,'rDxNon')||n0(s.diag);
+const diagCanOf=s=>fromRef(s,'rDxCan')||diagNonOf(s);
+const treatOf=s=>fromRef(s,'rTreat')||n0(s.treat);
+// average days already waited: about half the median wait to first appointment, while the field is blank or a placeholder
+const waitOf=s=>n0(s.rFirst)>0&&(!(n0(s.wait)>0)||(s.src&&s.src.wait==='est'))?n0(s.rFirst)/2:n0(s.wait);
+const fdsOK=s=>diagNonOf(s)>0;
+const d62OK=s=>fdsOK(s)&&treatOf(s)>0;
 
 function simulate(s,g,capBase){
   const H=+g.horizon,start=parseISO(g.start),sig=+g.sigma,pat=pattern(g);
   const cb=capBase!=null?capBase:n0(s.cap)*(1+g.capAdj/100);
-  const use=useOf(s),conv=n0(s.conv)/100,diag=n0(s.diag),post=n0(s.treat),okF=fdsOK(s),ok6=d62OK(s);
-  const q=[];const K=Math.max(1,Math.round(2*n0(s.wait)/7));
+  const use=useOf(s),conv=n0(s.conv)/100,dN=diagNonOf(s),dC=diagCanOf(s),post=treatOf(s),okF=fdsOK(s),ok6=d62OK(s);
+  const q=[];const K=Math.max(1,Math.round(2*waitOf(s)/7));
   for(let k=K;k>=1;k--)q.push({a:-(k-1),n:Math.max(0,n0(s.wl))/K});
   const rows=[];
   for(let t=0;t<H;t++){
@@ -539,7 +555,7 @@ function simulate(s,g,capBase){
     let seen=0,fok=0,dok=0,ws=0;
     while(cap>1e-9&&q.length){
       const c=q[0];const take=Math.min(c.n,cap);const w=(t-c.a)*7+3;
-      if(okF)fok+=take*lnCdf(28-w,diag,sig);if(ok6)dok+=take*lnCdf(62-w,post,sig*0.85);ws+=take*w;
+      if(okF)fok+=take*fdsP(28-w,dN,dC,conv,sig);if(ok6)dok+=take*lnCdf(62-w,post,sig*0.85);ws+=take*w;
       seen+=take;cap-=take;c.n-=take;if(c.n<1e-9)q.shift();
     }
     let wl=0,over=0;for(const c of q){wl+=c.n;if(t-c.a>=4)over+=c.n;}
@@ -575,8 +591,11 @@ function solve(s,g,metric){
 function safeWait(s,g,weeklyDemand){
   if(!d62OK(s))return {noT:true,list:null};
   const sig=+g.sigma;
-  const wf=28-n0(s.diag)*Math.exp(sig*invPhi(Math.min(0.999,g.fdsT/100)));
-  const w62=62-n0(s.treat)*Math.exp(sig*0.85*invPhi(Math.min(0.999,g.d62T/100)));
+  // FDS: longest first wait at which the mix of cancer and non-cancer patients still reaches target
+  const tF=Math.min(0.999,g.fdsT/100),c=n0(s.conv)/100,dN=diagNonOf(s),dC=diagCanOf(s);
+  let lo=-60,hi=28;for(let i=0;i<50;i++){const m=(lo+hi)/2;if(fdsP(28-m,dN,dC,c,sig)>=tF)lo=m;else hi=m;}
+  const wf=lo;
+  const w62=62-treatOf(s)*Math.exp(sig*0.85*invPhi(Math.min(0.999,g.d62T/100)));
   const w=Math.min(wf,w62);
   // the model counts a patient seen in their first week as waiting 3 days, so the queue holds (w - 3) days of referrals
   return {wf,w62,w,list:w>3?weeklyDemand*(w-3)/7:0};
@@ -659,8 +678,18 @@ function renderRail(){
       h+=`<div class="field ${cls}"><label for="f-${k}">${lab}${tag}</label><input type="number" id="f-${k}" data-f="${k}" step="${st}" min="0" value="${s[k]??''}"${ph?` placeholder="${ph}"`:''}>${note?`<span class="field-note">${note}</span>`:''}</div>`;
     });
     h+='</div></fieldset>';});
+  h+='<p class="seen-note" id="derivedNote"></p>';
   if(s.hist&&s.hist.length)h+=`<p class="hint">${s.hist.length} weeks of imported history, last week w/c ${wc(parseISO(s.hist[s.hist.length-1].d))}.</p>`;
   rail.innerHTML=h;
+}
+function updateDerived(){
+  const el=document.getElementById('derivedNote'),s=S.sites.find(x=>x.id===S.sel);if(!el||!s)return;
+  const parts=[],r=v=>Math.round(v);
+  if(fromRef(s,'rDxNon'))parts.push('first appt to diagnosis '+r(fromRef(s,'rDxNon'))+' days (non-cancer)');
+  if(fromRef(s,'rDxCan'))parts.push('first appt to diagnosis '+r(fromRef(s,'rDxCan'))+' days (cancer)');
+  if(fromRef(s,'rTreat'))parts.push('first appt to first treatment '+r(fromRef(s,'rTreat'))+' days');
+  if(n0(s.rFirst)>0&&waitOf(s)!==n0(s.wait))parts.push('average current wait '+waitOf(s).toFixed(1)+' days (half the median wait to first appointment)');
+  el.textContent=parts.length?'Worked out from the medians from referral and used instead of the boxes above: '+parts.join('; ')+'.':'';
 }
 function renderNeed(p,rows){
   const g=S.g,H=rows.length,el=document.getElementById('needGrid');
@@ -731,7 +760,7 @@ function renderResults(){
   if(p&&p.sol.noT){needH='<div class="k-val" style="font-size:1.1rem">Enter pathway timings</div><div class="k-sub">Add the median days to diagnosis and to first treatment for this site to see FDS, 62-day and the slots needed.</div>';}
   else if(p){const sol=p.sol;const planned=n0(p.s.cap)*(1+g.capAdj/100);
     needH=sol.ok?`<div class="k-val num">${f0(sol.cap)}</div><div class="k-sub">core slots per week to reach ${g.fdsT}% FDS. Planned now: ${f0(planned)} (${sgn(sol.cap-planned)}).</div>`
-      :`<div class="k-val" style="font-size:1.1rem">Not reachable with slots alone</div><div class="k-sub">Median time from first appointment to diagnosis needs to fall to about ${Math.floor(sol.maxDiag)} days (now ${p.s.diag}).</div>`;}
+      :`<div class="k-val" style="font-size:1.1rem">Not reachable with slots alone</div><div class="k-sub">Median time from first appointment to diagnosis needs to fall to about ${Math.floor(sol.maxDiag)} days (now ${Math.round(diagNonOf(p.s))}).</div>`;}
   else{const ok=results.per.filter(x=>x.sol.ok);const tot=ok.reduce((a,x)=>a+x.sol.cap,0);const planned=ok.reduce((a,x)=>a+n0(x.s.cap)*(1+g.capAdj/100),0);
     const noT=results.per.filter(x=>x.sol.noT).length,bad=results.per.length-ok.length-noT;
     needH=!ok.length&&noT?`<div class="k-val" style="font-size:1.1rem">Enter pathway timings</div><div class="k-sub">No tumour site has its median days to diagnosis yet. Add them in each site to see the slots needed.</div>`
@@ -806,7 +835,7 @@ function renderAll(full){
   document.getElementById('exampleNote').hidden=!(est>0&&from);
   if(from){document.getElementById('noteHead').textContent=from.label+' figures from PTL.';
     document.getElementById('noteText').textContent='Referrals per week, growth and conversion come from the SWAG PTL (8 weeks to w/e '+wc(parseISO(PTL_SITES.ptlWeeks[1]))+') and CWT data (to '+MON[parseISO(PTL_SITES.cwtMonths[1]).getMonth()]+' '+parseISO(PTL_SITES.cwtMonths[1]).getFullYear()+'). Pathway timings are left blank for you to enter from your cancer system: FDS and 62-day appear once they are in. '+est+' values tagged "placeholder" (slots, waiting list, average wait, slots lost) are starting values to replace with your own figures. Only aggregate counts are used and nothing you enter leaves your browser.';}
-  compute();renderTabs();if(full)renderRail();renderResults();save();
+  compute();renderTabs();if(full)renderRail();updateDerived();renderResults();save();
 }
 
 /* ---------- events ---------- */
